@@ -1,35 +1,30 @@
-// index.js
 import express from "express";
-import mysql2 from "mysql2";
+import dotenv from "dotenv";
 import cors from "cors";
+import { connectToDatabase } from "./config/db.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
+
+dotenv.config();
 const app = express();
 
-const PORT = 8000;
-
 app.use(cors());
-const db = mysql2.createConnection({
-  host: "localhost",
-  user: "root",
-  database: "st_portal",
-  password: "",
-});
+app.use(express.json());
 
-// // List Posts
-// app.get('/api/posts', (req, res) => {
-//     db.query('SELECT * FROM posts', (err, rows) => {
-//         if (err) return res.status(500).json({ error: err.message });
-//         res.json(rows);
-//     });
-// });
+const PORT = process.env.PORT || 8000;
 
-app.get("/api/users", (req, res) => {
-  db.query("SELECT * FROM users", (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
+// ✅ Connect DB once
+await connectToDatabase();
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// Routes
+
+app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
+
+// Default route
+app.get("/", (req, res) =>
+  res.send("Attendance Management System API Running...")
+);
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
