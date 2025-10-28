@@ -6,6 +6,7 @@ import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import feeRoutes from "./routes/feeRoutes.js";
+import configRoutes from "./routes/configRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/fee", feeRoutes);
+app.use("/api/config", configRoutes);
 
 // Default route
 app.get("/", (req, res) =>
