@@ -7,7 +7,7 @@ dotenv.config();
 
 // ✅ Register User (Admin or Receptionist)
 export const registerUser = async (req, res) => {
-     console.log("🧠 Incoming Body:", req.body); // 👈 Debug log
+  console.log("🧠 Incoming Body:", req.body); // 👈 Debug log
   try {
     const { name, email, password, role } = req.body;
 
@@ -23,7 +23,9 @@ export const registerUser = async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully", userId });
   } catch (error) {
-    res.status(500).json({ message: "Registration failed", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Registration failed", error: error.message });
   }
 };
 
@@ -31,12 +33,19 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log(email, password);
 
     const user = await UserModel.findByEmail(email);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
@@ -44,12 +53,20 @@ export const loginUser = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message: "Login successful",
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: "Login failed", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Login failed", error: error.message });
   }
 };
