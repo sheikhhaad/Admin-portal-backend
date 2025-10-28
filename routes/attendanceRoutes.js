@@ -10,7 +10,8 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Protected Routes
-router.post("/mark", verifyToken, markAttendance);
+// router.post("/mark", verifyToken, markAttendance);
+router.post("/mark", markAttendance);
 router.get("/today", verifyToken, getTodayAttendance);
 router.get("/student/:student_id", verifyToken, getStudentAttendance);
 

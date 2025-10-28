@@ -9,6 +9,13 @@ export const markAttendance = async (req, res) => {
       return res.status(400).json({ message: "student_id is required" });
     }
 
+    const alreadyMarked = await AttendanceModel.checkAlreadyMarked(student_id);
+    if (alreadyMarked) {
+      return res.status(400).json({
+        message: "Attendance already marked for this student today.",
+      });
+    }
+
     // Class starts at 9:00 AM (example)
     const classStartTime = new Date();
     classStartTime.setHours(9, 0, 0, 0);

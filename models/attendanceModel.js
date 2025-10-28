@@ -1,6 +1,17 @@
 import { executeQuery } from "../config/queryHelper.js";
 
 export const AttendanceModel = {
+  // ✅ Check if already marked today
+  checkAlreadyMarked: async (student_id) => {
+    const query = `
+      SELECT * FROM attendance
+      WHERE student_id = ? AND date = CURDATE()
+    `;
+    const rows = await executeQuery(query, [student_id]);
+    return rows.length > 0;
+  },
+
+  // ✅ Mark Attendance
   markAttendance: async (student_id, status, remarks) => {
     const query = `
       INSERT INTO attendance (student_id, status, date, time_in, remarks)
