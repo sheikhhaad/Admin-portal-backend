@@ -5,6 +5,7 @@ import { connectToDatabase } from "./config/db.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import feeRoutes from "./routes/feeRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -21,6 +22,7 @@ await connectToDatabase();
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/fee", feeRoutes);
 
 // Default route
 app.get("/", (req, res) =>
