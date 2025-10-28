@@ -7,6 +7,7 @@ dotenv.config();
 
 // ✅ Register User (Admin or Receptionist)
 export const registerUser = async (req, res) => {
+     console.log("🧠 Incoming Body:", req.body); // 👈 Debug log
   try {
     const { name, email, password, role } = req.body;
 
