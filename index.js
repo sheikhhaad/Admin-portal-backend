@@ -4,7 +4,7 @@ import cors from "cors";
 import { connectToDatabase } from "./config/db.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -18,9 +18,9 @@ const PORT = process.env.PORT || 8000;
 await connectToDatabase();
 
 // Routes
-
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // Default route
 app.get("/", (req, res) =>
