@@ -1,5 +1,7 @@
+// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { TokenModel } from "../models/tokenModel.js";
 
 dotenv.config();
 

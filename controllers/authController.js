@@ -70,3 +70,20 @@ export const loginUser = async (req, res) => {
       .json({ success: false, message: "Login failed", error: error.message });
   }
 };
+
+// ✅ Logout User
+export const logoutUser = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    await TokenModel.blacklistToken(token);
+
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Logout failed", error: error.message });
+  }
+};
