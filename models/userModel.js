@@ -7,12 +7,23 @@ export const UserModel = {
     return rows[0];
   },
 
+  findByRole: async (role) => {
+    const query = "SELECT * FROM users WHERE role = ?";
+    const rows = await executeQuery(query, [role]);
+    return rows[0];
+  },
+
   create: async (name, email, hashedPassword, role) => {
     const query = `
       INSERT INTO users (name, email, password, role)
       VALUES (?, ?, ?, ?)
     `;
-    const result = await executeQuery(query, [name, email, hashedPassword, role]);
+    const result = await executeQuery(query, [
+      name,
+      email,
+      hashedPassword,
+      role,
+    ]);
     return result.insertId;
   },
 };

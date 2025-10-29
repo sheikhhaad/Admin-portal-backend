@@ -35,7 +35,7 @@ export const loginUser = async (req, res) => {
     const { email, password,role } = req.body;
     console.log(email, password);
 
-    const user = await UserModel.findByRole(role);
+    const user = await UserModel.findByEmail;(role);
     if (!user)
       return res
         .status(404)
