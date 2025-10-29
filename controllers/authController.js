@@ -33,7 +33,7 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    console.log(email, password);
+    console.log(email, password, role);
 
     const user = await UserModel.findByEmail(email);
     if (!user)
@@ -77,19 +77,68 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ✅ Logout User
-// export const logoutUser = async (req, res) => {
-//   try {
-//     const authHeader = req.headers.authorization;
-//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//       return res.status(401).json({ message: "No token provided" });
-//     }
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await UserModel.delete(id);
 
-//     const token = authHeader.split(" ")[1];
-//     await TokenModel.blacklistToken(token);
+    if (deleted)
+      return res.status(200).json({ message: "User deleted successfully" });
+    res.status(404).json({ message: "User not found" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 
-//     res.status(200).json({ success: true, message: "Logged out successfully" });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Logout failed", error: error.message });
-//   }
-// };
+// ✅ Update user details
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params; // user id from URL
+    const { name, email, role } = req.body; // fields to update
+
+    // validation
+    if (!name || !email || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const updated = await UserModel.update(id, { name, email, role });
+
+    if (updated) {
+      return res.status(200).json({ message: "User updated successfully" });
+    }
+
+    res.status(404).json({ message: "User not found" });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// ✅ Update user password
+export const updatePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update DB
+    const updated = await UserModel.updatePassword(id, hashedPassword);
+
+    if (updated) {
+      return res.status(200).json({ message: "Password updated successfully" });
+    }
+
+    res.status(404).json({ message: "User not found" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};

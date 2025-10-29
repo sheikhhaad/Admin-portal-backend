@@ -1,68 +1,49 @@
 import fs from "fs";
 import csv from "csv-parser";
-import QRCode from "qrcode";
 import { connectToDatabase } from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
 
-const importStudents = async () => {
-  const connection = await connectToDatabase();
-  const results = [];
 
-  fs.createReadStream("students.csv")
-    .pipe(csv())
-    .on("data", (row) => results.push(row))
-    .on("end", async () => {
-      console.log(`📥 Found ${results.length} students in CSV.`);
 
-      for (const student of results) {
-        try {
-          const qrText = student.student_id;
+const connection = await connectToDatabase();
 
-          // 1️⃣ Generate QR Code as base64
-          const qrBuffer = await QRCode.toBuffer(qrText, { width: 300 });
+fs.createReadStream("fees_dummy.csv")
+  .pipe(csv())
+  .on("data", async (row) => {
+    const query = `
+      INSERT INTO students 
+        (student_id, name, cnic, contact, address, course_id, class_time, slot, campus, fee_amount, qr_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    await connection.execute(query, [
+      row.student_id,
+      row.name,
+      row.cnic,
+      row.contact,
+      row.address,
+      row.course_id,
+      row.class_time,
+      row.slot,
+      row.campus,
+      row.fee_amount,
+      row.qr_url || null,
+    ]);
+  })
+  .on("end", () => {
+    console.log("✅ All students imported successfully!");
+  });
 
-          // 2️⃣ Upload to Cloudinary directly from buffer
-          const uploadResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader
-              .upload_stream(
-                { folder: "student_qr_codes", public_id: student.student_id },
-                (error, result) => {
-                  if (error) reject(error);
-                  else resolve(result);
-                }
-              )
-              .end(qrBuffer);
-          });
 
-          // 3️⃣ Store student in database with QR URL
-          const query = `
-            INSERT INTO students
-              (student_id, name, cnic, contact, address, course, slot, campus, fee_amount, qr_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `;
 
-          await connection.execute(query, [
-            student.student_id,
-            student.name,
-            student.cnic,
-            student.contact,
-            student.address,
-            student.course,
-            student.slot,
-            student.campus,
-            student.fee_amount || 0,
-            uploadResult.secure_url,
-          ]);
+//   import QRCode from "qrcode";
+// import { v2 as cloudinary } from "cloudinary";
 
-          console.log(`✅ Added ${student.name} (${student.student_id})`);
-        } catch (error) {
-          console.error(`❌ Failed for ${student.name}:`, error.message);
-        }
-      }
+// // Inside import loop
+// const qrBuffer = await QRCode.toBuffer(row.student_id);
+// const uploadResult = await new Promise((resolve, reject) => {
+//   cloudinary.uploader.upload_stream(
+//     { folder: "student_qr_codes", public_id: row.student_id },
+//     (error, result) => error ? reject(error) : resolve(result)
+//   ).end(qrBuffer);
+// });
 
-      console.log("🎉 Import complete with Cloudinary QR uploads!");
-      process.exit();
-    });
-};
-
-importStudents();
+// await connection.execute(query, [..., uploadResult.secure_url]);

@@ -1,0 +1,11 @@
+student_id,month,amount_paid,payment_status,payment_date,remarks
+AIT01-STU001,October 2025,2500,Paid,2025-10-05,Monthly Fee
+CA02-STU002,October 2025,3500,Paid,2025-10-06,Monthly Fee
+INT03-STU003,October 2025,2200,Paid,2025-10-05,Monthly Fee
+ADC04-STU004,October 2025,2800,Paid,2025-10-07,Monthly Fee
+CSS05-STU005,October 2025,3200,Unpaid,,Pending Payment
+ARB06-STU006,October 2025,2000,Paid,2025-10-06,Monthly Fee
+IBF07-STU007,October 2025,3000,Paid,2025-10-05,Monthly Fee
+AIT01-STU008,October 2025,2500,Paid,2025-10-07,Monthly Fee
+CA02-STU009,October 2025,3500,Paid,2025-10-05,Monthly Fee
+CSS05-STU010,October 2025,3200,Paid,2025-10-06,Monthly Fee
