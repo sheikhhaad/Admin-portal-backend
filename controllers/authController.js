@@ -32,10 +32,10 @@ export const registerUser = async (req, res) => {
 // ✅ Login User
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password,role } = req.body;
     console.log(email, password);
 
-    const user = await UserModel.findByEmail(email);
+    const user = await UserModel.findByRole(role);
     if (!user)
       return res
         .status(404)
