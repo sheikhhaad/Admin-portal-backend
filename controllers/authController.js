@@ -32,10 +32,10 @@ export const registerUser = async (req, res) => {
 // ✅ Login User
 export const loginUser = async (req, res) => {
   try {
-    const { email, password,role } = req.body;
+    const { email, password, role } = req.body;
     console.log(email, password);
 
-    const user = await UserModel.findByEmail;(role);
+    const user = await UserModel.findByEmail(email);
     if (!user)
       return res
         .status(404)
@@ -46,6 +46,12 @@ export const loginUser = async (req, res) => {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
+
+    // ✅ Match role (admin/receptionist etc.)
+    if (role && user.role !== role)
+      return res
+        .status(403)
+        .json({ success: false, message: `Access denied for role: ${role}` });
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
@@ -72,18 +78,18 @@ export const loginUser = async (req, res) => {
 };
 
 // ✅ Logout User
-export const logoutUser = async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided" });
-    }
+// export const logoutUser = async (req, res) => {
+//   try {
+//     const authHeader = req.headers.authorization;
+//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//       return res.status(401).json({ message: "No token provided" });
+//     }
 
-    const token = authHeader.split(" ")[1];
-    await TokenModel.blacklistToken(token);
+//     const token = authHeader.split(" ")[1];
+//     await TokenModel.blacklistToken(token);
 
-    res.status(200).json({ success: true, message: "Logged out successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Logout failed", error: error.message });
-  }
-};
+//     res.status(200).json({ success: true, message: "Logged out successfully" });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Logout failed", error: error.message });
+//   }
+// };
