@@ -9,7 +9,6 @@ import feeRoutes from "./routes/feeRoutes.js";
 import configRoutes from "./routes/configRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 
-
 dotenv.config();
 const app = express();
 
