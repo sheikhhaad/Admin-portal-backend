@@ -7,9 +7,9 @@ dotenv.config();
 
 // ✅ Register User (Admin or Receptionist)
 export const registerUser = async (req, res) => {
-  console.log("🧠 Incoming Body:", req.body); // 👈 Debug log
   try {
     const { name, email, password, role } = req.body;
+    console.log(name, email.password, role);
 
     if (!name || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
@@ -33,7 +33,6 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    console.log(email, password, role);
 
     const user = await UserModel.findByEmail(email);
     if (!user)
