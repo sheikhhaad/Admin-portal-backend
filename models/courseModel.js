@@ -2,7 +2,7 @@ import { executeQuery } from "../config/queryHelper.js";
 
 export const CourseModel = {
   getAllCourses: async () => {
-    const query = "SELECT * FROM courses ORDER BY id DESC";
+    const query = "SELECT * FROM courses ORDER BY course_id DESC";
     return await executeQuery(query);
   },
 
