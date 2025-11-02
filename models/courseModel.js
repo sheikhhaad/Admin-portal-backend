@@ -7,7 +7,7 @@ export const CourseModel = {
   },
 
   getCourseById: async (id) => {
-    const query = "SELECT * FROM courses WHERE id = ?";
+    const query = "SELECT * FROM courses WHERE course_id = ?";
     const result = await executeQuery(query, [id]);
     return result[0];
   },
@@ -19,13 +19,13 @@ export const CourseModel = {
   },
 
   updateCourse: async (id, data) => {
-    const query = "UPDATE courses SET name = ?, description = ?, duration = ? WHERE id = ?";
+    const query = "UPDATE courses SET name = ?, description = ?, duration = ? WHERE course_id = ?";
     await executeQuery(query, [data.name, data.description, data.duration, id]);
     return { message: "Course updated successfully" };
   },
 
   deleteCourse: async (id) => {
-    const query = "DELETE FROM courses WHERE id = ?";
+    const query = "DELETE FROM courses WHERE course_id = ?";
     await executeQuery(query, [id]);
     return { message: "Course deleted successfully" };
   },

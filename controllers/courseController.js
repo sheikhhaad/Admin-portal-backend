@@ -38,8 +38,8 @@ export const getCourseById = async (req, res) => {
 // ✅ Update course
 export const updateCourse = async (req, res) => {
   try {
-    const { id } = req.params;
-    const result = await CourseModel.updateCourse(id, req.body);
+    const { course_id } = req.params;
+    const result = await CourseModel.updateCourse(course_id, req.body);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Error updating course", error: error.message });
@@ -49,8 +49,8 @@ export const updateCourse = async (req, res) => {
 // ✅ Delete course
 export const deleteCourse = async (req, res) => {
   try {
-    const { id } = req.params;
-    const result = await CourseModel.deleteCourse(id);
+    const { course_id } = req.params;
+    const result = await CourseModel.deleteCourse(course_id);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Error deleting course", error: error.message });
