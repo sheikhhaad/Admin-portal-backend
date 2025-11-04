@@ -1,47 +1,65 @@
 import { AttendanceModel } from "../models/attendanceModel.js";
 
 // ✅ Mark Attendance (QR Scan or Manual)
-export const markAttendance = async (req, res) => {
+export const autoMarkAbsentees = async (req, res) => {
   try {
-    const { student_id, time_in } = req.body;
+    const today = new Date();
+    const currentDay = today.toLocaleString("en-US", { weekday: "short" }); // e.g. "Mon"
+    const todayDate = today.toISOString().split("T")[0]; // yyyy-mm-dd
 
-    if (!student_id) {
-      return res.status(400).json({ message: "student_id is required" });
+    // 🔍 Get all courses whose 'days' include today
+    const courses = await CourseModel.getCoursesByDay(currentDay);
+
+    if (!courses.length)
+      return res.status(200).json({ message: "No classes scheduled today" });
+
+    let totalAbsent = 0;
+
+    for (const course of courses) {
+      const { course_id, class_end_time } = course;
+
+      // Convert end time to Date for comparison
+      const [endH, endM] = class_end_time.split(":");
+      const classEnd = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        endH,
+        endM
+      );
+
+      // Run only after class end
+      if (today < classEnd) continue;
+
+      // 🔍 Fetch all students of this course
+      const students = await StudentModel.getByCourse(course_id);
+
+      for (const student of students) {
+        // Check if attendance exists for today
+        const isMarked = await AttendanceModel.checkAlreadyMarked(student.student_id);
+
+        if (!isMarked) {
+          await AttendanceModel.markAttendance(
+            student.student_id,
+            "absent",
+            "Did not attend / no scan",
+            classEnd
+          );
+          totalAbsent++;
+        }
+      }
     }
 
-    const alreadyMarked = await AttendanceModel.checkAlreadyMarked(student_id);
-    if (alreadyMarked) {
-      return res.status(400).json({
-        message: "Attendance already marked for this student today.",
-      });
-    }
-
-    // Class starts at 9:00 AM (example)
-    // const classStartTime = new Date();
-    // classStartTime.setHours(9, 0, 0, 0);
-
-    // const now = new Date();
-    // const delayMinutes = Math.floor((now - classStartTime) / 60000);
-
-    let status = "present";
-    let remarks = "On time";
-
-    // if (delayMinutes > 5 && delayMinutes <= 20) {
-    //   status = "late";
-    //   remarks = `Late by ${delayMinutes} mins`;
-    // } else if (delayMinutes > 20) {
-    //   status = "absent";
-    //   remarks = "Exceeded late grace period";
-    // }
-
-    await AttendanceModel.markAttendance(student_id, status, remarks);
-
-    res.status(201).json({
-      message: `Attendance marked as ${status}`,
-      details: { student_id, status, remarks },
+    res.status(200).json({
+      message: `Auto-absent process complete.`,
+      totalAbsent,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error marking attendance", error: error.message });
+    console.error("Auto-absent error:", error);
+    res.status(500).json({
+      message: "Error auto-marking absentees",
+      error: error.message,
+    });
   }
 };
 

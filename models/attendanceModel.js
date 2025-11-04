@@ -12,12 +12,12 @@ export const AttendanceModel = {
   },
 
   // ✅ Mark Attendance
-  markAttendance: async (student_id, status, remarks) => {
+  markAttendance: async (student_id, status, time_in, remarks) => {
     const query = `
       INSERT INTO attendance (student_id, status, date, time_in, remarks)
       VALUES (?, ?, CURDATE(), CURTIME(), ?)
     `;
-    return await executeQuery(query, [student_id, status, remarks]);
+    return await executeQuery(query, [student_id, status, time_in, remarks]);
   },
 
   getTodayAttendance: async () => {

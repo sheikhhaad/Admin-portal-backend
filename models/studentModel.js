@@ -17,4 +17,12 @@ export const StudentModel = {
     `;
     return await executeQuery(query, [name, cnic, contact, address, course_id]);
   },
+
+  getByCourse: async (course_id) => {
+    const result = await executeQuery(
+      "SELECT * FROM students WHERE course_id = ?",
+      [course_id]
+    );
+    return result;
+  },
 };
