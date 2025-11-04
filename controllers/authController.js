@@ -59,10 +59,10 @@ export const loginUser = async (req, res) => {
     );
 
     res.cookie("token", token, {
-      httpOnly: true,
+      // httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
     });
 
     res.status(200).json({

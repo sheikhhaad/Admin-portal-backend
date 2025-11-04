@@ -12,7 +12,12 @@ import courseRoutes from "./routes/courseRoutes.js";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: env.process.FRONTEND_URL, // or your frontend domain
+    credentials: true, // ✅ allows cookies to be sent
+  })
+);
 app.use(express.json()); // ✅ This line is CRUCIAL
 
 const PORT = process.env.PORT || 8000;
