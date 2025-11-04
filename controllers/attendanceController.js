@@ -17,22 +17,22 @@ export const markAttendance = async (req, res) => {
     }
 
     // Class starts at 9:00 AM (example)
-    const classStartTime = new Date();
-    classStartTime.setHours(9, 0, 0, 0);
+    // const classStartTime = new Date();
+    // classStartTime.setHours(9, 0, 0, 0);
 
-    const now = new Date();
-    const delayMinutes = Math.floor((now - classStartTime) / 60000);
+    // const now = new Date();
+    // const delayMinutes = Math.floor((now - classStartTime) / 60000);
 
     let status = "present";
     let remarks = "On time";
 
-    if (delayMinutes > 5 && delayMinutes <= 20) {
-      status = "late";
-      remarks = `Late by ${delayMinutes} mins`;
-    } else if (delayMinutes > 20) {
-      status = "absent";
-      remarks = "Exceeded late grace period";
-    }
+    // if (delayMinutes > 5 && delayMinutes <= 20) {
+    //   status = "late";
+    //   remarks = `Late by ${delayMinutes} mins`;
+    // } else if (delayMinutes > 20) {
+    //   status = "absent";
+    //   remarks = "Exceeded late grace period";
+    // }
 
     await AttendanceModel.markAttendance(student_id, status, remarks);
 
