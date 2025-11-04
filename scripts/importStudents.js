@@ -2,37 +2,37 @@ import fs from "fs";
 import csv from "csv-parser";
 import { connectToDatabase } from "../config/db.js";
 
-
-
 const connection = await connectToDatabase();
+const students = [];
 
-fs.createReadStream("fees_dummy.csv")
+fs.createReadStream("students_dummy.csv")
   .pipe(csv())
-  .on("data", async (row) => {
+  .on("data", (row) => {
+    students.push(row);
+  })
+  .on("end", async () => {
     const query = `
       INSERT INTO students 
-        (student_id, name, cnic, contact, address, course_id, class_time, slot, campus, fee_amount, qr_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (student_id, student_img, name, cnic, contact, address, course_id, fee_amount, qr_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await connection.execute(query, [
-      row.student_id,
-      row.name,
-      row.cnic,
-      row.contact,
-      row.address,
-      row.course_id,
-      row.class_time,
-      row.slot,
-      row.campus,
-      row.fee_amount,
-      row.qr_url || null,
-    ]);
-  })
-  .on("end", () => {
+
+    for (const row of students) {
+      await connection.execute(query, [
+        row.student_id,
+        row.student_img || null,
+        row.name,
+        row.cnic,
+        row.contact,
+        row.address,
+        row.course_id,
+        row.fee_amount || null,
+        row.qr_url || null,
+      ]);
+    }
+
     console.log("✅ All students imported successfully!");
   });
-
-
 
 //   import QRCode from "qrcode";
 // import { v2 as cloudinary } from "cloudinary";

@@ -10,11 +10,11 @@ export const StudentModel = {
   },
 
   create: async (data) => {
-    const { name, cnic, contact, address, course, slot, campus } = data;
+    const { name, cnic, contact, address, course_id} = data;
     const query = `
-      INSERT INTO students (name, cnic, contact, address, course, slot, campus)
+      INSERT INTO students (name, cnic, contact, address, course_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    return await executeQuery(query, [name, cnic, contact, address, course, slot, campus]);
+    return await executeQuery(query, [name, cnic, contact, address, course_id]);
   },
 };

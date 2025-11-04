@@ -12,15 +12,15 @@ export const CourseModel = {
     return result[0];
   },
 
-  createCourse: async (name, description, duration) => {
-    const query = "INSERT INTO courses (name, description, duration) VALUES (?, ?, ?)";
-    const result = await executeQuery(query, [name, description, duration]);
+  createCourse: async (name, description, time, slot) => {
+    const query = "INSERT INTO courses (name, description, class_time, slot) VALUES (?, ?, ?, ?)";
+    const result = await executeQuery(query, [name, description, time, slot]);
     return result.insertId;
   },
 
   updateCourse: async (id, data) => {
-    const query = "UPDATE courses SET name = ?, description = ?, duration = ? WHERE course_id = ?";
-    await executeQuery(query, [data.name, data.description, data.duration, id]);
+    const query = "UPDATE courses SET name = ?, description = ?, class_time = ? , slot =? WHERE course_id = ?";
+    await executeQuery(query, [data.name, data.description, data.time, data.slot, id]);
     return { message: "Course updated successfully" };
   },
 
