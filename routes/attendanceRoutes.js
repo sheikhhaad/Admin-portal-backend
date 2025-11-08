@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  markAttendance,
+  // markAttendance,
   getTodayAttendance,
   getStudentAttendance,
   autoMarkAbsentees,
@@ -12,8 +12,9 @@ const router = express.Router();
 
 // Protected Routes
 // router.post("/mark", verifyToken, markAttendance);
-router.post("/mark", markAttendance);
+// router.post("/mark", markAttendance);
 router.get("/today", verifyToken, getTodayAttendance);
 router.get("/student/:student_id", verifyToken, getStudentAttendance);
-router.post("/auto-absent", autoMarkAbsentees);
+// router.post("/auto-absent", autoMarkAbsentees);
+router.post("/mark", autoMarkAbsentees);
 export default router;
