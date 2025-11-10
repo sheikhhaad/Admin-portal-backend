@@ -19,21 +19,51 @@ export const CourseModel = {
     return result.insertId;
   },
 
-  updateCourse: async (id, data) => {
-    const query =
-      "UPDATE courses SET name = ?, description = ?, class_time = ?, class_start_time = ?, class_end_time = ?, slot = ?, days = ? WHERE course_id = ?";
-    await executeQuery(query, [
-      data.name,
-      data.description,
-      data.time,
-      data.class_start_time,
-      data.class_end_time,
-      data.slot,
-      data.days,
-      id,
-    ]);
-    return { message: "Course updated successfully" };
+  updateCourse: async (course_id, data) => {
+    try {
+      // 1️⃣ Filter out undefined or null keys (so only valid fields remain)
+      const validFields = Object.entries(data).filter(
+        ([_, value]) => value !== undefined && value !== null
+      );
+
+      if (validFields.length === 0) {
+        throw new Error("No valid fields to update");
+      }
+
+      // 2️⃣ Build query dynamically
+      const setClause = validFields.map(([key]) => `${key} = ?`).join(", ");
+      const values = validFields.map(([_, value]) => value);
+
+      const query = `UPDATE courses SET ${setClause} WHERE course_id = ?`;
+      values.push(course_id); // course_id at the end
+
+      // 3️⃣ Log for debugging
+      console.log("Executing query:", query);
+      console.log("With values:", values);
+
+      await executeQuery(query, values);
+      return { message: "✅ Course updated successfully" };
+    } catch (error) {
+      console.error("Error updating course:", error);
+      throw error;
+    }
   },
+
+  // updateCourse: async (id, data) => {
+  //   const query =
+  //     "UPDATE courses SET name = ?, description = ?, class_time = ?, class_start_time = ?, class_end_time = ?, slot = ?, days = ? WHERE course_id = ?";
+  //   await executeQuery(query, [
+  //     data.name,
+  //     data.description,
+  //     data.class_time,
+  //     data.class_start_time,
+  //     data.class_end_time,
+  //     data.slot,
+  //     data.days,
+  //     id,
+  //   ]);
+  //   return { message: "Course updated successfully" };
+  // },
 
   deleteCourse: async (id) => {
     const query = "DELETE FROM courses WHERE course_id = ?";

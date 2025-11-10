@@ -37,12 +37,23 @@ export const getCourseById = async (req, res) => {
 
 // ✅ Update course
 export const updateCourse = async (req, res) => {
+  console.log("=== updateCourse called ===");
   try {
-    const { course_id } = req.params;
+    const course_id = req.params.id; // ← Changed from course_id to id
+    // OR: const { id: course_id } = req.params;
+
+    if (!course_id) {
+      return res.status(400).json({ message: "Course ID is required" });
+    }
+
     const result = await CourseModel.updateCourse(course_id, req.body);
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Error updating course", error: error.message });
+    console.error("Controller error:", error.message);
+    res.status(500).json({ 
+      message: "Error updating course", 
+      error: error.message 
+    });
   }
 };
 

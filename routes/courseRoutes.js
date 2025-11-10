@@ -11,10 +11,10 @@ import { verifyToken, verifyRole } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Admin-only routes
-router.post("/", verifyToken, verifyRole("admin"), addCourse);
 router.get("/", verifyToken, getCourses);
 router.get("/:id", verifyToken, getCourseById);
-router.put("/:id", verifyToken, verifyRole("admin"), updateCourse);
+router.post("/", verifyToken, verifyRole("admin"), addCourse);
+router.put("/:id", updateCourse);
 router.delete("/:id", verifyToken, verifyRole("admin"), deleteCourse);
 
 export default router;
