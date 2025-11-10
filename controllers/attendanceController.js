@@ -1,4 +1,5 @@
 import { AttendanceModel } from "../models/attendanceModel.js";
+import { CourseModel } from "../models/courseModel.js";
 
 // ✅ Mark Attendance (QR Scan or Manual)
 export const autoMarkAbsentees = async (req, res) => {

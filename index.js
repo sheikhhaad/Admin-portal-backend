@@ -8,13 +8,15 @@ import attendanceRoutes from "./routes/attendanceRoutes.js";
 import feeRoutes from "./routes/feeRoutes.js";
 import configRoutes from "./routes/configRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
 
+app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173" , // or your frontend domain
+    origin: process.env.FRONTEND_URL || "http://localhost:5173", // or your frontend domain
     credentials: true, // ✅ allows cookies to be sent
   })
 );
