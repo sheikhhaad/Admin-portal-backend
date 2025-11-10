@@ -83,6 +83,31 @@ export const loginUser = async (req, res) => {
   }
 };
 
+// ✅ Logout User
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear the token cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/", // important: same path where it was set
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
+      error: error.message,
+    });
+  }
+};
+
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;

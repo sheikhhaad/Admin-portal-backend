@@ -3,6 +3,7 @@ import {
   deleteUser,
   getAllUsers,
   loginUser,
+  logoutUser,
   registerUser,
   updatePassword,
   updateUser,
@@ -17,6 +18,6 @@ router.delete("/:id", deleteUser);
 router.put("/:id", updateUser);
 router.put("/:id/password", updatePassword);
 router.get("/", getAllUsers);
-// router.post("/logout", verifyToken, logoutUser); // ✅ Protected logout
+router.post("/logout", logoutUser);
 
 export default router;
