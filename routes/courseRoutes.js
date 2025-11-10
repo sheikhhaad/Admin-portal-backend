@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/", verifyToken, getCourses);
 router.get("/:id", verifyToken, getCourseById);
 router.post("/", verifyToken, verifyRole("admin"), addCourse);
-router.put("/:id", updateCourse);
+router.put("/:id", verifyToken, verifyRole("admin"), updateCourse);
 router.delete("/:id", verifyToken, verifyRole("admin"), deleteCourse);
 
 export default router;
