@@ -21,12 +21,15 @@ export const CourseModel = {
 
   updateCourse: async (id, data) => {
     const query =
-      "UPDATE courses SET name = ?, description = ?, class_time = ? , slot =? WHERE course_id = ?";
+      "UPDATE courses SET name = ?, description = ?, class_time = ?, class_start_time = ?, class_end_time = ?, slot = ?, days = ? WHERE course_id = ?";
     await executeQuery(query, [
       data.name,
       data.description,
       data.time,
+      data.class_start_time,
+      data.class_end_time,
       data.slot,
+      data.days,
       id,
     ]);
     return { message: "Course updated successfully" };
@@ -44,6 +47,19 @@ export const CourseModel = {
       [course_id]
     );
     return result.length > 0 ? result[0].class_time : null;
+  },
+
+  getClassSchedule: async (course_id) => {
+    const result = await executeQuery(
+      "SELECT class_start_time, class_end_time FROM courses WHERE course_id = ? LIMIT 1",
+      [course_id]
+    );
+    return result.length > 0
+      ? {
+          start: result[0].class_start_time,
+          end: result[0].class_end_time,
+        }
+      : null;
   },
 
   getCoursesByDay: async (dayShort) => {
