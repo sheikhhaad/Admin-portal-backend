@@ -36,7 +36,9 @@ export const autoMarkAbsentees = async (req, res) => {
 
       for (const student of students) {
         // Check if attendance exists for today
-        const isMarked = await AttendanceModel.checkAlreadyMarked(student.student_id);
+        const isMarked = await AttendanceModel.checkAlreadyMarked(
+          student.student_id
+        );
 
         if (!isMarked) {
           await AttendanceModel.markAttendance(
@@ -69,7 +71,9 @@ export const getTodayAttendance = async (req, res) => {
     const records = await AttendanceModel.getTodayAttendance();
     res.status(200).json(records);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching attendance", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching attendance", error: error.message });
   }
 };
 
@@ -80,7 +84,12 @@ export const getStudentAttendance = async (req, res) => {
     const records = await AttendanceModel.getStudentAttendance(student_id);
     res.status(200).json(records);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching student attendance", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Error fetching student attendance",
+        error: error.message,
+      });
   }
 };
 
@@ -90,7 +99,11 @@ export const getAllAttendance = async (req, res) => {
     const records = await AttendanceModel.getAllAttendence();
     res.status(200).json(records);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching all student attendance", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Error fetching all student attendance",
+        error: error.message,
+      });
   }
 };
-
