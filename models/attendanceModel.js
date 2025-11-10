@@ -1,6 +1,10 @@
 import { executeQuery } from "../config/queryHelper.js";
 
 export const AttendanceModel = {
+  getAllAttendence: async () => {
+    return await executeQuery("SELECT * FROM attendence")
+  },
+
   // ✅ Check if already marked today
   checkAlreadyMarked: async (student_id) => {
     const query = `

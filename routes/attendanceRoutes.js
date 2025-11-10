@@ -4,6 +4,7 @@ import {
   getTodayAttendance,
   getStudentAttendance,
   autoMarkAbsentees,
+  getAllAttendance,
 } from "../controllers/attendanceController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -17,4 +18,5 @@ router.get("/today", verifyToken, getTodayAttendance);
 router.get("/student/:student_id", verifyToken, getStudentAttendance);
 // router.post("/auto-absent", autoMarkAbsentees);
 router.post("/mark", autoMarkAbsentees);
+router.post("/all", getAllAttendance)
 export default router;

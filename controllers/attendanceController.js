@@ -83,3 +83,14 @@ export const getStudentAttendance = async (req, res) => {
     res.status(500).json({ message: "Error fetching student attendance", error: error.message });
   }
 };
+
+// get all student's attendence
+export const getAllAttendance = async (req, res) => {
+  try {
+    const records = await AttendanceModel.getAllAttendence();
+    res.status(200).json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching all student attendance", error: error.message });
+  }
+};
+
