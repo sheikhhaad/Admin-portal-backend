@@ -1,7 +1,37 @@
 import { AttendanceModel } from "../models/attendanceModel.js";
 import { CourseModel } from "../models/courseModel.js";
 
+
+export const markAttendance = async (req, res) => {
+  try {
+    const { student_id } = req.body;
+    if (!student_id)
+      return res.status(400).json({ message: "Student ID required" });
+
+    // Check if already marked for today
+    const already = await AttendanceModel.checkAlreadyMarked(student_id);
+    if (already)
+      return res.status(200).json({ message: "Already marked present today" });
+
+    // Mark as present
+    const now = new Date();
+    await AttendanceModel.markAttendance(student_id, "present", "QR Scan", now);
+
+    res.status(200).json({
+      message: "✅ Attendance marked successfully",
+      student_id,
+      status: "present",
+      time: now,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error marking attendance", error: error.message });
+  }
+};
+
 // ✅ Mark Attendance (QR Scan or Manual)
+// npm install node-cron
 export const autoMarkAbsentees = async (req, res) => {
   try {
     const today = new Date();

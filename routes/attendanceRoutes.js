@@ -5,6 +5,7 @@ import {
   getStudentAttendance,
   autoMarkAbsentees,
   getAllAttendance,
+  markAttendance,
 } from "../controllers/attendanceController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -17,6 +18,10 @@ const router = express.Router();
 router.get("/today", verifyToken, getTodayAttendance);
 router.get("/student/:student_id", verifyToken, getStudentAttendance);
 // router.post("/auto-absent", autoMarkAbsentees);
-router.post("/mark", autoMarkAbsentees);
+router.post("/mark", markAttendance);
 router.post("/all", getAllAttendance)
+
+router.post("/auto-mark", autoMarkAbsentees); // for testing only
+// npm install node-cron
+
 export default router;

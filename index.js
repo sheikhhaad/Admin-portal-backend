@@ -9,6 +9,14 @@ import feeRoutes from "./routes/feeRoutes.js";
 import configRoutes from "./routes/configRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import cookieParser from "cookie-parser";
+// import cron from "node-cron";
+// import { autoMarkAbsentees } from "./controllers/attendanceController.js";
+
+//! Run every day at 11:59 PM
+// cron.schedule("59 23 * * *", async () => {
+//   console.log("⏰ Running auto absentee marking...");
+//   await autoMarkAbsentees({}, { status: () => ({ json: console.log }) });
+// });
 
 dotenv.config();
 const app = express();
