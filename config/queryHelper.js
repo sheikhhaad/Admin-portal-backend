@@ -2,12 +2,12 @@
 import { connectToDatabase } from "./db.js";
 
 export const executeQuery = async (query, params = []) => {
+  const pool = connectToDatabase();
   try {
-    const connection = await connectToDatabase();
-    const [rows] = await connection.execute(query, params);
+    const [rows] = await pool.execute(query, params);
     return rows;
-  } catch (error) {
-    console.error("❌ Query execution error:", error.message);
-    throw error;
+  } catch (err) {
+    console.error("❌ Query execution error:", err.message);
+    throw err;
   }
 };
