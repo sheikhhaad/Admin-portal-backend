@@ -37,6 +37,19 @@ export const createClass = async (req, res) => {
   }
 };
 
+// ✅ Get all classes
+export const getClasses = async (req, res) => {
+  try {
+    const courses = await ClassModel.getAllClasses();
+    res.status(200).json(courses);
+  } catch (error) {
+    res.status(500).json({
+      message: "❌ Error fetching courses",
+      error: error.message,
+    });
+  }
+};
+
 // ✅ Get class by ID
 export const getClassById = async (req, res) => {
   try {

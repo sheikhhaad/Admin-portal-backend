@@ -2,6 +2,11 @@
 import { executeQuery } from "../config/queryHelper.js";
 
 export const ClassModel = {
+  getAllClasses: async () => {
+    const query = "SELECT * FROM campus_classes ORDER BY class_id DESC";
+    return await executeQuery(query);
+  },
+
   getClassById: async (id) => {
     const query = "SELECT * FROM campus_classes WHERE class_id = ?";
     const result = await executeQuery(query, [id]);
