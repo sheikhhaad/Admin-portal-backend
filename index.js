@@ -24,7 +24,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", // or your frontend domain
+    origin: process.env.FRONTEND_URL || "https://student-admin-portal.pages.dev", // or your frontend domain
     credentials: true, // ✅ allows cookies to be sent
   })
 );
