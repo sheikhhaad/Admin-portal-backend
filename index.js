@@ -9,6 +9,7 @@ import feeRoutes from "./routes/feeRoutes.js";
 import configRoutes from "./routes/configRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import cookieParser from "cookie-parser";
+import classRoutes from "./routes/classRoutes.js"
 // import cron from "node-cron";
 // import { autoMarkAbsentees } from "./controllers/attendanceController.js";
 
@@ -42,6 +43,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/fee", feeRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/class", classRoutes);
 
 // Default route
 app.get("/", (req, res) =>
