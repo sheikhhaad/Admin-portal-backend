@@ -21,17 +21,30 @@ export const ClassModel = {
     return result.length > 0 ? result[0].class_time : null;
   },
 
+  //   getClassSchedule: async (class_id) => {
+  //     const result = await executeQuery(
+  //       "SELECT class_start_time, class_end_time FROM campus_classes WHERE class_id = ? LIMIT 1",
+  //       [class_id]
+  //     );
+  //     return result.length > 0
+  //       ? {
+  //           start: result[0].class_start_time,
+  //           end: result[0].class_end_time,
+  //         }
+  //       : null;
+  //   },
   getClassSchedule: async (class_id) => {
-    const result = await executeQuery(
-      "SELECT class_start_time, class_end_time FROM campus_classes WHERE class_id = ? LIMIT 1",
-      [class_id]
-    );
-    return result.length > 0
-      ? {
-          start: result[0].class_start_time,
-          end: result[0].class_end_time,
-        }
-      : null;
+    const query = `
+   SELECT 
+    class_start_time AS start, 
+    class_end_time AS end, 
+    days 
+  FROM campus_classes 
+  WHERE class_id = ?
+
+  `;
+    const result = await executeQuery(query, [class_id]);
+    return result[0];
   },
 
   getCoursesByDay: async (dayShort) => {

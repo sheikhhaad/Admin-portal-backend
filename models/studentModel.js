@@ -5,6 +5,13 @@ export const StudentModel = {
     return await executeQuery("SELECT * FROM students");
   },
 
+  getByStudentId: async (student_id) => {
+    const query = `SELECT * FROM students WHERE student_id = ?`;
+    const result = await executeQuery(query, [student_id]);
+    console.log("DB result for student_id:", student_id, result);
+    return result[0];
+  },
+
   getById: async (id) => {
     return await executeQuery("SELECT * FROM students WHERE id = ?", [id]);
   },
