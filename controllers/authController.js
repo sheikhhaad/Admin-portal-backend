@@ -59,9 +59,9 @@ export const loginUser = async (req, res) => {
     );
 
    res.cookie("token", token, {
-  httpOnly: true,       // JS access blocked
+  // httpOnly: true,       // JS access blocked
   secure: true,         // HTTPS required
-  sameSite: "none",     // cross-domain cookie
+  // sameSite: "none",     // cross-domain cookie
   maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
 });
 
