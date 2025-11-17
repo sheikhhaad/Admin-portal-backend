@@ -19,7 +19,7 @@ router.get("/today", verifyToken, getTodayAttendance);
 router.get("/student/:student_id", verifyToken, getStudentAttendance);
 // router.post("/auto-absent", autoMarkAbsentees);
 router.post("/mark", markAttendance);
-router.post("/all", getAllAttendance)
+router.get("/all", getAllAttendance)
 
 router.post("/auto-mark", autoMarkAbsentees); // for testing only
 // npm install node-cron
