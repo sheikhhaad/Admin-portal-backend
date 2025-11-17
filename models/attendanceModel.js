@@ -1,8 +1,8 @@
 import { executeQuery } from "../config/queryHelper.js";
 
 export const AttendanceModel = {
-  getAllAttendence: async () => {
-    return await executeQuery("SELECT * FROM attendence");
+  getAllAttendance: async () => {
+    return await executeQuery("SELECT * FROM attendance");
   },
 
   // ✅ Check if already marked today

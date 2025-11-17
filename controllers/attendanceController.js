@@ -251,7 +251,7 @@ export const getStudentAttendance = async (req, res) => {
 // get all student's attendence
 export const getAllAttendance = async (req, res) => {
   try {
-    const records = await AttendanceModel.getAllAttendence();
+    const records = await AttendanceModel.getAllAttendance();
     res.status(200).json(records);
   } catch (error) {
     res.status(500).json({
