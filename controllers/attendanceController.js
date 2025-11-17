@@ -64,10 +64,16 @@ export const markAttendance = async (req, res) => {
         .json({ message: "student_id and time_in are required" });
     }
 
-    // ✅ Step 1: Check if already marked on same date
+    // Convert scan time into Date object
+    const scanTime = new Date(time_in);
+
+    // Extract date only (YYYY-MM-DD)
+    const dateStr = scanTime.toISOString().split("T")[0];
+
+    // Step 1: Check if already marked today
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
       student_id,
-      time_in
+      dateStr
     );
     if (alreadyMarked) {
       return res.status(400).json({
@@ -76,32 +82,24 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Get student and class info
+    // Step 2: Get student + class info
     const student = await StudentModel.getByStudentId(student_id);
-    console.log("Student fetched:", student);
-
     if (!student || !student.class_id) {
-      console.log("❌ Student not found or class_id missing");
       return res.status(404).json({ message: "Student or class not found" });
     }
 
     const classInfo = await ClassModel.getClassSchedule(student.class_id);
-    console.log("Class schedule:", classInfo);
-
     if (!classInfo || !classInfo.start || !classInfo.end || !classInfo.days) {
-      console.log("❌ Class schedule incomplete or missing");
       return res
         .status(404)
         .json({ message: "Class schedule not found or incomplete" });
     }
 
-    // ✅ Step 3: Parse time_in and adjust to PKT
-    const now = new Date(time_in);
-    now.setHours(now.getHours() + 5); // Adjust to PKT if server is in UTC
-
-    // ✅ Step 4: Check if today is a valid class day
-    const dayOfWeek = now.toLocaleDateString("en-US", { weekday: "short" }); // e.g. "Mon"
-    const allowedDays = classInfo.days.split(",").map((d) => d.trim()); // e.g. ["Mon", "Tue", "Wed"]
+    // Step 3: Validate class day
+    const dayOfWeek = scanTime.toLocaleDateString("en-US", {
+      weekday: "short",
+    }); // e.g. "Mon"
+    const allowedDays = classInfo.days.split(",").map((d) => d.trim());
 
     if (!allowedDays.includes(dayOfWeek)) {
       return res.status(400).json({
@@ -110,38 +108,51 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ Step 5: Parse class start and end times
-    const [startHour, startMin] = classInfo.start.split(":");
-    const [endHour, endMin] = classInfo.end.split(":");
+    // Step 4: Convert scan time into minutes
+    const scanHour = scanTime.getHours();
+    const scanMin = scanTime.getMinutes();
+    const scanTotalMinutes = scanHour * 60 + scanMin;
 
-    const classStart = new Date(now);
-    classStart.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+    // Step 5: Convert SQL TIME to minutes
+    const [startH, startM] = classInfo.start.split(":").map(Number);
+    const [endH, endM] = classInfo.end.split(":").map(Number);
 
-    const classEnd = new Date(now);
-    classEnd.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
+    const classStartMinutes = startH * 60 + startM;
+    const classEndMinutes = endH * 60 + endM;
 
-    // ✅ Step 6: Reject if outside class time
-    if (now < classStart || now > classEnd) {
+    // Step 6: Validate class time window
+    if (
+      scanTotalMinutes < classStartMinutes ||
+      scanTotalMinutes > classEndMinutes
+    ) {
       return res.status(400).json({
         message: "No class in session at this time",
-        details: { classStart, classEnd, now },
+        details: {
+          classStart: classInfo.start,
+          classEnd: classInfo.end,
+          scanTime: `${scanHour}:${scanMin}`,
+        },
       });
     }
 
-    // ✅ Step 7: Calculate delay and decide status
-    const delayMinutes = Math.floor((now - classStart) / 60000);
+    // Step 7: Calculate delay (for Late)
+    const delay = scanTotalMinutes - classStartMinutes;
     let status = "present";
     let remarks = "On time";
 
-    if (delayMinutes > 15) {
+    if (delay > 15) {
       status = "late";
-      remarks = `Late by ${delayMinutes} mins`;
+      remarks = `Late by ${delay} mins`;
     }
 
-    console.log("Delay:", delayMinutes, "Status:", status);
-
-    // ✅ Step 8: Mark attendance
-    await AttendanceModel.markAttendance(student_id, status, remarks, time_in);
+    // Step 8: Save attendance
+    await AttendanceModel.markAttendance(
+      student_id,
+      status,
+      remarks,
+      dateStr,
+      time_in
+    );
 
     res.status(201).json({
       message: `Attendance marked as ${status}`,
@@ -160,9 +171,11 @@ export const autoMarkAbsentees = async (req, res) => {
     const today = new Date();
     const currentDay = today.toLocaleString("en-US", { weekday: "short" }); // e.g. "Mon"
     const todayDate = today.toISOString().split("T")[0]; // yyyy-mm-dd
+    console.log("📅 Today:", todayDate);
 
     // 🔍 Get all classes scheduled today
     const classes = await ClassModel.getCoursesByDay(currentDay);
+    console.log("📚 Classes today:", classes);
 
     if (!classes.length) {
       return res.status(200).json({ message: "No classes scheduled today" });
@@ -172,6 +185,7 @@ export const autoMarkAbsentees = async (req, res) => {
 
     for (const cls of classes) {
       const { class_id, course_id, class_end_time } = cls;
+      console.log("⏰ Skipping class:", class_id);
 
       // Convert class_end_time to Date
       const [endH, endM] = class_end_time.split(":");
@@ -188,6 +202,7 @@ export const autoMarkAbsentees = async (req, res) => {
 
       // 🔍 Get all students in this course
       const students = await StudentModel.getByCourse(course_id);
+      console.log("👨‍🎓 Students:", students);
 
       for (const student of students) {
         // Check if attendance already marked today
@@ -195,6 +210,7 @@ export const autoMarkAbsentees = async (req, res) => {
           student.student_id,
           todayDate // ✅ Pass date to avoid false positives
         );
+        console.log("✅ Already marked:", isMarked);
 
         if (!isMarked) {
           await AttendanceModel.markAttendance(
