@@ -6,6 +6,9 @@ import QRCode from "qrcode";
 import uploadToDrive from "../utils/googleDrive.js";
 import { executeQuery } from "../config/queryHelper.js";
 
+// ✅ Utility to sanitize IDs for Cloudinary
+const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
+
 export const addStudent = async (req, res) => {
   try {
     const {
@@ -25,7 +28,10 @@ export const addStudent = async (req, res) => {
     }
 
     // 1️⃣ Generate Course-wise Student ID
-    const student_id = await generateStudentId(course_id);
+    let student_id = await generateStudentId(course_id);
+
+    // Sanitize the full student_id for Cloudinary
+    const safeStudentId = sanitizeId(student_id);
 
     // 2️⃣ Upload Student Image to Cloudinary (optional)
     let studentImgUrl = null;
@@ -34,7 +40,7 @@ export const addStudent = async (req, res) => {
         req.files.student_img[0].path,
         {
           folder: "students_images",
-          public_id: `${student_id}_photo`,
+          public_id: `${safeStudentId}_photo`,
         }
       );
       studentImgUrl = upload.secure_url;
@@ -47,7 +53,7 @@ export const addStudent = async (req, res) => {
         req.files.fee_voucher[0].path,
         {
           folder: "students_vouchers",
-          public_id: `${student_id}_voucher`,
+          public_id: `${safeStudentId}_voucher`,
         }
       );
       voucherUrl = upload.secure_url;
@@ -57,7 +63,7 @@ export const addStudent = async (req, res) => {
     const qrDataURL = await QRCode.toDataURL(student_id);
     const qrUpload = await cloudinary.uploader.upload(qrDataURL, {
       folder: "student_qr",
-      public_id: `${student_id}_qr`,
+      public_id: `${safeStudentId}_qr`,
     });
     const qrUrl = qrUpload.secure_url;
 
