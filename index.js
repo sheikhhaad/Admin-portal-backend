@@ -23,12 +23,33 @@ dotenv.config();
 const app = express();
 
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "https://student-admin-portal.pages.dev",
+  "https://sbilform.vercel.app",
+  "https://sbil.vercel.app",
+  "http://localhost:5173"
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://student-admin-portal.pages.dev", // or your frontend domain
-    credentials: true, // ✅ allows cookies to be sent
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL || "https://student-admin-portal.pages.dev", // or your frontend domain
+//     credentials: true, // ✅ allows cookies to be sent
+//   })
+// );
 app.use(express.json()); // ✅ This line is CRUCIAL
 
 const PORT = process.env.PORT || 8000;
