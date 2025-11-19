@@ -13,7 +13,7 @@ import { verifyToken, verifyRole } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Public or token-protected routes
-router.get("/", verifyToken, getClasses);
+router.get("/", getClasses);
 router.get("/:class_id", verifyToken, getClassById);
 router.get("/time/:class_id", verifyToken, getClassTime);
 router.get("/schedule/:class_id", verifyToken, getClassSchedule);

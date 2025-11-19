@@ -13,7 +13,7 @@ router.get("/", getAllStudents);
 router.post("/register", registerStudent);
 
 router.post(
-  "/add-student",
+  "/addstudent",
   upload.fields([
     { name: "student_img", maxCount: 1 },
     { name: "fee_voucher", maxCount: 1 },

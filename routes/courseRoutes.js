@@ -11,7 +11,7 @@ import { verifyToken, verifyRole } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Public or token-protected routes
-router.get("/", verifyToken, getCourses);
+router.get("/", getCourses);
 router.get("/:course_id", verifyToken, getCourseById);
 
 // Admin-only routes
