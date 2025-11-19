@@ -2,6 +2,7 @@ import express from "express";
 import {
   addStudent,
   getAllStudents,
+  getByStudentId,
   registerStudent,
 } from "../controllers/studentController.js";
 import multer from "multer";
@@ -11,6 +12,7 @@ const upload = multer({ dest: "uploads/" });
 
 router.get("/", getAllStudents);
 router.post("/register", registerStudent);
+router.get("/:student_id", getByStudentId);
 
 router.post(
   "/addstudent",

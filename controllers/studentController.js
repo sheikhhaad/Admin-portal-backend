@@ -101,6 +101,16 @@ export const addStudent = async (req, res) => {
   }
 };
 
+export const getByStudentId = async (req, res) => {
+  try {
+    const { student_id } = req.params;
+    const students = await StudentModel.getByStudentId(student_id);
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching students", error });
+  }
+};
+
 export const getAllStudents = async (req, res) => {
   try {
     const students = await StudentModel.getAll();
