@@ -71,4 +71,4 @@ app.get("/", (req, res) =>
   res.send("Attendance Management System API Running...")
 );
 
-// app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
