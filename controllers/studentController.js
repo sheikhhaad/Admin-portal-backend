@@ -1,12 +1,13 @@
 import { ApplicantModel } from "../models/applicantModel.js";
 import { StudentModel } from "../models/studentModel.js";
 import { generateStudentId } from "../models/studentModel.js";
-import cloudinary from "../config/cloudinary.js";
+// import cloudinary from "../config/cloudinary.js";
 import QRCode from "qrcode";
-import uploadToDrive from "../utils/googleDrive.js";
+// import uploadToDrive from "../utils/googleDrive.js";
 import { executeQuery } from "../config/queryHelper.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
-// ✅ Utility to sanitize IDs for Cloudinary
+// Utility to sanitize Cloudinary IDs
 const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
 
 export const addStudent = async (req, res) => {
@@ -27,47 +28,48 @@ export const addStudent = async (req, res) => {
         .json({ error: "Name and Course ID are required fields!" });
     }
 
-    // 1️⃣ Generate Course-wise Student ID
-    let student_id = await generateStudentId(course_id);
-
-    // Sanitize the full student_id for Cloudinary
+    // 1️⃣ Generate Student ID
+    const student_id = await generateStudentId(course_id);
     const safeStudentId = sanitizeId(student_id);
 
-    // 2️⃣ Upload Student Image to Cloudinary (optional)
     let studentImgUrl = null;
+    let voucherUrl = null;
+
+    // 2️⃣ Upload Student Photo (Buffer method)
     if (req.files?.student_img?.[0]) {
-      const upload = await cloudinary.uploader.upload(
-        req.files.student_img[0].path,
-        {
-          folder: "students_images",
-          public_id: `${safeStudentId}_photo`,
-        }
+      const imgBuffer = req.files.student_img[0].buffer;
+      const upload = await uploadBufferToCloudinary(
+        imgBuffer,
+        "students_images",
+        `${safeStudentId}_photo`
       );
       studentImgUrl = upload.secure_url;
     }
 
-    // 3️⃣ Upload Fee Voucher to Cloudinary (optional)
-    let voucherUrl = null;
+    // 3️⃣ Upload Fee Voucher (Buffer method)
     if (req.files?.fee_voucher?.[0]) {
-      const upload = await cloudinary.uploader.upload(
-        req.files.fee_voucher[0].path,
-        {
-          folder: "students_vouchers",
-          public_id: `${safeStudentId}_voucher`,
-        }
+      const voucherBuffer = req.files.fee_voucher[0].buffer;
+      const upload = await uploadBufferToCloudinary(
+        voucherBuffer,
+        "students_vouchers",
+        `${safeStudentId}_voucher`
       );
       voucherUrl = upload.secure_url;
     }
 
-    // 4️⃣ Generate QR Code for Student ID
-    const qrDataURL = await QRCode.toDataURL(student_id);
-    const qrUpload = await cloudinary.uploader.upload(qrDataURL, {
-      folder: "student_qr",
-      public_id: `${safeStudentId}_qr`,
-    });
+    // 4️⃣ Generate QR → Convert Base64 PNG to Buffer → Upload
+    const qrBase64 = await QRCode.toDataURL(student_id);
+    const qrBuffer = Buffer.from(qrBase64.split(",")[1], "base64");
+
+    const qrUpload = await uploadBufferToCloudinary(
+      qrBuffer,
+      "student_qr",
+      `${safeStudentId}_qr`
+    );
+
     const qrUrl = qrUpload.secure_url;
 
-    // 5️⃣ Insert student into DB
+    // 5️⃣ Insert into DB
     await executeQuery(
       `INSERT INTO students 
         (student_id, student_img, name, cnic, contact, address, email, qr_url, course_id, class_id, voucher_url)
