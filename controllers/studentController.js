@@ -28,6 +28,25 @@ export const addStudent = async (req, res) => {
         .json({ error: "Name and Course ID are required fields!" });
     }
 
+    // 🚧 REQUIRE contact to check duplicates
+    if (!contact) {
+      return res.status(400).json({ error: "Contact number is required" });
+    }
+
+    // 0️⃣ DUPLICATE CHECK — IMPORTANT
+    const exists = await executeQuery(
+      "SELECT student_id FROM students WHERE contact = ? LIMIT 1",
+      [contact]
+    );
+
+     if (exists.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Student already registered with this contact number!",
+        student_id: exists[0].student_id,
+      });
+    }
+
     // 1️⃣ Generate Student ID
     const student_id = await generateStudentId(course_id);
     const safeStudentId = sanitizeId(student_id);
