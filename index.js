@@ -71,4 +71,13 @@ app.get("/", (req, res) =>
   res.send("Attendance Management System API Running...")
 );
 
+app.get("/test-google", async (req, res) => {
+  try {
+    await axios.get("https://google.com");
+    res.send("Google reachable");
+  } catch (e) {
+    res.send("Google BLOCKED!");
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

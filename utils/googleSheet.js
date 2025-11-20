@@ -7,7 +7,9 @@ dotenv.config();
 export const appendToSheet = async (values) => {
   try {
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(fs.readFileSync("./google-service-account-sheet.json")),
+      credentials: JSON.parse(
+        fs.readFileSync("./google-service-account-sheet.json")
+      ),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
@@ -24,7 +26,9 @@ export const appendToSheet = async (values) => {
     });
 
     console.log("Sheet updated:", response.data);
-  } catch (err) {
-    console.error("Google Sheet Error:", err);
+  } catch (error) {
+    console.error("GOOGLE SHEET ERROR ===>");
+    console.error(error?.response?.data || error.message || error);
+    console.error("Google Sheet Error:", error);
   }
 };
