@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 // import uploadToDrive from "../utils/googleDrive.js";
 import { executeQuery } from "../config/queryHelper.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
+import { appendToSheet } from "../utils/googleSheet.js";
 
 // Utility to sanitize Cloudinary IDs
 const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
@@ -39,7 +40,7 @@ export const addStudent = async (req, res) => {
       [contact]
     );
 
-     if (exists.length > 0) {
+    if (exists.length > 0) {
       return res.status(409).json({
         success: false,
         message: "Student already registered with this contact number!",
@@ -107,6 +108,15 @@ export const addStudent = async (req, res) => {
         voucherUrl,
       ]
     );
+
+    await appendToSheet([
+      student_id,
+      name,
+      contact,
+      course_id,
+      voucherUrl || "",
+      new Date().toISOString(),
+    ]);
 
     return res.status(201).json({
       success: true,
