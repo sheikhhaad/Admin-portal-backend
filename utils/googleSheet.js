@@ -1,11 +1,13 @@
-import { google } from "googleapis";
-import dotenv from "dotenv";
-import fs from "fs";
+import { google } from "googleapis"
+import fs from "fs"
+import dotenv from "dotenv"
 
-dotenv.config();
+dotenv.config()
 
-export const appendToSheet = async (values) => {
+export const appendToSheet = async (row) => {
   try {
+    const creds = fs.readFileSync("./google-service-account-sheet.json", "utf8")
+
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(
         fs.readFileSync("./google-service-account-sheet.json")
@@ -13,17 +15,17 @@ export const appendToSheet = async (values) => {
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
-    const sheets = google.sheets({ version: "v4", auth });
+    const sheets = google.sheets({ version: "v4", auth })
 
-    const response = await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: "Sheet1!A:F",
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: {
-        values: [values],
-      },
-    });
+        values: [row]
+      }
+    })
 
     console.log("Sheet updated:", response.data);
   } catch (error) {
@@ -31,4 +33,4 @@ export const appendToSheet = async (values) => {
     console.error(error?.response?.data || error.message || error);
     console.error("Google Sheet Error:", error);
   }
-};
+}
