@@ -1,10 +1,10 @@
 import { google } from "googleapis"
-import dotenv from "dotenv"
 import fs from "fs"
+import dotenv from "dotenv"
 
 dotenv.config()
 
-export const appendToSheet = async (values) => {
+export const appendToSheet = async (row) => {
   try {
     const creds = fs.readFileSync("./google-service-account-sheet.json", "utf8")
 
@@ -15,18 +15,18 @@ export const appendToSheet = async (values) => {
 
     const sheets = google.sheets({ version: "v4", auth })
 
-    const response = await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: "Sheet1!A:F",
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: {
-        values: [values]
+        values: [row]
       }
     })
 
-    console.log("Sheet updated:", response.data)
+    console.log("Sheet updated")
   } catch (err) {
-    console.error("Google Sheet Error:", err)
+    console.error("Google Sheet Error:", err.response?.data || err)
   }
 }

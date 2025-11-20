@@ -109,14 +109,17 @@ export const addStudent = async (req, res) => {
       ]
     );
 
-    await appendToSheet([
-      student_id,
-      name,
-      contact,
-      course_id,
-      voucherUrl || "",
-      new Date().toISOString(),
-    ]);
+   const row = [
+  student_id || "",
+  name || "",
+  contact || "",
+  course_id || "",
+  voucherUrl || "",
+  new Date().toISOString()
+]
+
+await appendToSheet(row)
+
 
     return res.status(201).json({
       success: true,
