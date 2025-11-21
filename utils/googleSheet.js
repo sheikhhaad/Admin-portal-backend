@@ -30,7 +30,12 @@ export const appendToSheet = async (row) => {
         values: [row],
       },
     });
-
+    console.log("ENV CHECK:", {
+      email: process.env.GOOGLE_CLIENT_EMAIL,
+      keyStart: process.env.GOOGLE_PRIVATE_KEY?.slice(0, 30),
+      keyEnd: process.env.GOOGLE_PRIVATE_KEY?.slice(-30),
+      sheet: process.env.GOOGLE_SHEET_ID,
+    });
     console.log("Sheet updated");
   } catch (err) {
     console.error("Google Sheet Error:", err.response?.data || err);
