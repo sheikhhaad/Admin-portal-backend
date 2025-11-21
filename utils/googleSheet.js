@@ -7,7 +7,7 @@ dotenv.config();
 export const appendToSheet = async (row) => {
   try {
     const creds = fs.readFileSync(
-      "./../google-service-account-sheet.json",
+      "./google-service-account-sheet.json",
       "utf8"
     );
 
