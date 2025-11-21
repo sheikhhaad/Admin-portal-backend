@@ -5,17 +5,13 @@ import dotenv from "dotenv"
 dotenv.config()
 
 export const appendToSheet = async (row) => {
-  
   try {
-    console.log(row);
     const creds = fs.readFileSync("./google-service-account-sheet.json", "utf8")
 
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(
-        fs.readFileSync("./google-service-account-sheet.json")
-      ),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+      credentials: JSON.parse(creds),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+    })
 
     const sheets = google.sheets({ version: "v4", auth })
 
@@ -28,8 +24,8 @@ export const appendToSheet = async (row) => {
         values: [row]
       }
     })
- 
-    console.log("Sheet updated", row)
+
+    console.log("Sheet updated")
   } catch (err) {
     console.error("Google Sheet Error:", err.response?.data || err)
   }
