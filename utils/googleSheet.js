@@ -5,7 +5,9 @@ import dotenv from "dotenv"
 dotenv.config()
 
 export const appendToSheet = async (row) => {
+  
   try {
+    console.log(row);
     const creds = fs.readFileSync("./google-service-account-sheet.json", "utf8")
 
     const auth = new google.auth.GoogleAuth({
@@ -24,8 +26,8 @@ export const appendToSheet = async (row) => {
         values: [row]
       }
     })
-
-    console.log("Sheet updated")
+ 
+    console.log("Sheet updated", row)
   } catch (err) {
     console.error("Google Sheet Error:", err.response?.data || err)
   }
