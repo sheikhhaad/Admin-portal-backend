@@ -11,9 +11,11 @@ export const appendToSheet = async (row) => {
     const creds = fs.readFileSync("./google-service-account-sheet.json", "utf8")
 
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(creds),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"]
-    })
+      credentials: JSON.parse(
+        fs.readFileSync("./google-service-account-sheet.json")
+      ),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
 
     const sheets = google.sheets({ version: "v4", auth })
 
