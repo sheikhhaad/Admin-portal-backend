@@ -12,9 +12,12 @@ export const appendToSheet = async (row) => {
     );
 
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(creds),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"]
-    })
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
 
     const sheets = google.sheets({ version: "v4", auth });
 
@@ -28,8 +31,8 @@ export const appendToSheet = async (row) => {
       },
     });
 
-    console.log("Sheet updated")
+    console.log("Sheet updated");
   } catch (err) {
-    console.error("Google Sheet Error:", err.response?.data || err)
+    console.error("Google Sheet Error:", err.response?.data || err);
   }
 };
