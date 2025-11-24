@@ -3,12 +3,43 @@ import { executeQuery } from "../config/queryHelper.js";
 
 export const ApplicantModel = {
   // ➕ Register new applicant
-  create: async ({ name, email, phone, course_id }) => {
+  create: async ({
+    name,
+    father_name,
+    contact,
+    cnic,
+    email,
+    address,
+    city,
+    gender,
+    qualification,
+    course_id,
+    class_id,
+    student_img,
+    register_fee,
+  }) => {
     const query = `
-      INSERT INTO applicants (name, email, phone, course_id, status)
-      VALUES (?, ?, ?, ?, 'pending')
+      INSERT INTO applicants 
+        (name, father_name, contact, cnic, email, address, gender, qualification, 
+         course_id, class_id, student_img, register_fee, status, created_at)
+      VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
     `;
-    const result = await executeQuery(query, [name, email, phone, course_id]);
+    const params = [
+      name,
+      father_name,
+      contact,
+      cnic,
+      email,
+      address,
+      city,
+      gender,
+      qualification,
+      course_id,
+      class_id,
+      student_img,
+      register_fee,
+    ];
+    const result = await executeQuery(query, params);
     return result.insertId;
   },
 
@@ -16,6 +47,13 @@ export const ApplicantModel = {
   findByEmail: async (email) => {
     const query = `SELECT * FROM applicants WHERE email = ? LIMIT 1`;
     const result = await executeQuery(query, [email]);
+    return result[0];
+  },
+
+  // 🔍 Find applicant by CNIC
+  findByCnic: async (cnic) => {
+    const query = `SELECT * FROM applicants WHERE cnic = ? LIMIT 1`;
+    const result = await executeQuery(query, [cnic]);
     return result[0];
   },
 
@@ -38,5 +76,11 @@ export const ApplicantModel = {
     const query = `SELECT * FROM applicants ORDER BY created_at DESC`;
     const result = await executeQuery(query);
     return result;
+  },
+  // ❌ Delete applicant
+  delete: async (applicant_id) => {
+    const query = `DELETE FROM applicants WHERE applicant_id = ?`;
+    const result = await executeQuery(query, [applicant_id]);
+    return result.affectedRows > 0;
   },
 };
