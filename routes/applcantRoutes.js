@@ -7,13 +7,27 @@ import {
   updateApplicantStatus,
   getAllApplicants,
   getPassedApplicants,
-  deleteApplicant
+  deleteApplicant,
 } from "../controllers/applicantController.js";
+import multer from "multer";
 
 const router = express.Router();
 
+// 👉 Use memory storage (NO folder needed)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+});
+
 // ➕ Register new applicant
-router.post("/create", createApplicant);
+router.post(
+  "/create",
+  upload.fields([
+    { name: "applicant_img", maxCount: 1 },
+    { name: "register_fee", maxCount: 1 },
+  ]),
+  createApplicant
+);
 
 // 🔍 Get applicant by email
 router.get("/email/:email", getApplicantByEmail);

@@ -1,17 +1,99 @@
 // controllers/applicantController.js
 import { ApplicantModel } from "../models/applicantModel.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
+
+// Utility to clean file names
+const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
 
 // ➕ Register new applicant
 export const createApplicant = async (req, res) => {
   try {
-    const applicantId = await ApplicantModel.create(req.body);
-    res
-      .status(201)
-      .json({
-        applicant_id: applicantId,
-        message: "Applicant registered successfully",
+    const {
+      name,
+      father_name,
+      contact,
+      cnic,
+      email,
+      address,
+      city,
+      gender,
+      qualification,
+      course_id,
+      class_id,
+    } = req.body;
+
+    // Required validation
+    if (!name || !contact || !cnic || !course_id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // DUPLICATE CHECK → contact or CNIC same NOT allowed
+    const existingByContact = await ApplicantModel.findByContact(contact);
+    const existingByCnic = await ApplicantModel.findByCnic(cnic);
+
+    if (existingByContact || existingByCnic) {
+      return res.status(409).json({
+        success: false,
+        message: "Applicant already registered!",
       });
+    }
+    const makeCloudinaryName = (name, type) => {
+      const clean = name.replace(/[^a-zA-Z0-9]/g, "_");
+      return `APP_${clean}_${Date.now()}_${type}`;
+    };
+
+    // Upload applicant photo
+    let applicantImgUrl = null;
+    if (req.files?.applicant_img?.[0]) {
+      const buffer = req.files.applicant_img[0].buffer;
+      applicantImgUrl = (
+        await uploadBufferToCloudinary(
+          buffer,
+          "applicants/photos",
+          makeCloudinaryName(name, "photo")
+        )
+      ).secure_url;
+    }
+
+    // Upload fee slip
+    let registerFeeUrl = null;
+    if (req.files?.register_fee?.[0]) {
+      const buffer = req.files.register_fee[0].buffer;
+      registerFeeUrl = (
+        await uploadBufferToCloudinary(
+          buffer,
+          "applicants/fee_slips",
+          makeCloudinaryName(name, "fee")
+        )
+      ).secure_url;
+    }
+
+    // Create record
+    const applicantId = await ApplicantModel.create({
+      name,
+      father_name,
+      contact,
+      cnic,
+      email,
+      address:address || null,
+      city:city || null,
+      gender,
+      qualification,
+      course_id,
+      class_id,
+      applicant_img: applicantImgUrl,
+      register_fee: registerFeeUrl,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Applicant registered successfully",
+      applicant_id: applicantId,
+      applicant_img: applicantImgUrl,
+      register_fee: registerFeeUrl,
+    });
   } catch (error) {
+    console.error("APPLICANT CREATE ERROR:", error);
     res.status(500).json({
       message: "Error creating applicant",
       error: error.message,
