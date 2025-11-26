@@ -39,7 +39,8 @@ export const createApplicant = async (req, res) => {
     }
     const makeCloudinaryName = (name, type) => {
       const clean = name.replace(/[^a-zA-Z0-9]/g, "_");
-      return `APP_${clean}_${Date.now()}_${type}`;
+      const random = Math.floor(Math.random() * 100000);
+      return `APP_${clean}_${Date.now()}_${random}_${type}`;
     };
 
     // Upload applicant photo
@@ -75,8 +76,8 @@ export const createApplicant = async (req, res) => {
       contact,
       cnic,
       email,
-      address:address || null,
-      city:city || null,
+      address: address || null,
+      city: city || null,
       gender,
       qualification,
       course_id,
