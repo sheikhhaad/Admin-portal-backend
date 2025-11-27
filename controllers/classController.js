@@ -12,9 +12,9 @@ export const createClass = async (req, res) => {
       days,
     } = req.body;
 
-    if (!course_id || !campus_name || !class_start_time || !class_end_time) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    // if (!course_id || !campus_name || !class_start_time || !class_end_time) {
+    //   return res.status(400).json({ message: "Missing required fields" });
+    // }
 
     const classId = await ClassModel.createCampusClass(
       course_id,
