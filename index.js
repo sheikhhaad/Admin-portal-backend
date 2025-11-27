@@ -29,6 +29,7 @@ const allowedOrigins = [
   "https://student-admin-portal.pages.dev",
   "https://sbilform.vercel.app",
   "https://sbil.vercel.app",
+  "https://registration-form-sbil.vercel.app",
   "http://localhost:5173"
 ];
 
