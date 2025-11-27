@@ -82,8 +82,8 @@ export const createApplicant = async (req, res) => {
       qualification,
       course_id,
       class_id,
-      applicant_img: applicantImgUrl,
-      register_fee: registerFeeUrl,
+      applicant_img: applicantImgUrl || null,
+      register_fee: registerFeeUrl || null,
     });
 
     res.status(201).json({
