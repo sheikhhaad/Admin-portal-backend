@@ -59,18 +59,18 @@ export const markAttendance = async (req, res) => {
     const { student_id, time_in } = req.body;
 
     if (!student_id || !time_in) {
-      return res
-        .status(400)
-        .json({ message: "student_id and time_in are required" });
+      return res.status(400).json({
+        message: "student_id and time_in are required",
+      });
     }
 
-    // Convert scan time into Date object
-    const scanTime = new Date(time_in);
+    // ✅ STEP 1: Convert frontend time to PK Time
+    const scanTime = new Date(time_in + "+05:00"); // PK Fix
 
-    // Extract date only (YYYY-MM-DD)
+    // ✅ STEP 2: Extract Date only (YYYY-MM-DD)
     const dateStr = scanTime.toISOString().split("T")[0];
 
-    // Step 1: Check if already marked today
+    // ✅ STEP 3: Prevent duplicate attendance
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
       student_id,
       dateStr
@@ -78,74 +78,78 @@ export const markAttendance = async (req, res) => {
     if (alreadyMarked) {
       return res.status(400).json({
         status: "Already Marked",
-        message: "Attendance already marked for this student on this date.",
+        message: "Attendance already marked for today",
       });
     }
 
-    // Step 2: Get student + class info
+    // ✅ STEP 4: Get student record
     const student = await StudentModel.getByStudentId(student_id);
     if (!student || !student.class_id) {
-      return res.status(404).json({ message: "Student or class not found" });
+      return res.status(404).json({
+        message: "Student not found or class not assigned",
+      });
     }
 
+    // ✅ STEP 5: Fetch class schedule
     const classInfo = await ClassModel.getClassSchedule(student.class_id);
-    if (!classInfo || !classInfo.start || !classInfo.end || !classInfo.days) {
-      return res
-        .status(404)
-        .json({ message: "Class schedule not found or incomplete" });
+
+    if (
+      !classInfo ||
+      !classInfo.class_start_time ||
+      !classInfo.class_end_time ||
+      !classInfo.days
+    ) {
+      return res.status(400).json({
+        message: "Class timing not configured by admin",
+      });
     }
 
-    // Step 3: Validate class day
+    // ✅ STEP 6: Normalize Day check (Mon Tue Wed)
     const dayOfWeek = scanTime.toLocaleDateString("en-US", {
       weekday: "short",
-    }); // e.g. "Mon"
-    const allowedDays = classInfo.days.split(",").map((d) => d.trim());
+    });
+    const allowedDays = classInfo.days
+      .split(",")
+      .map((d) => d.trim().slice(0, 3));
 
     if (!allowedDays.includes(dayOfWeek)) {
       return res.status(400).json({
-        message: "No class scheduled on this day",
-        details: { dayOfWeek, allowedDays },
+        message: "No class today",
+        today: dayOfWeek,
+        allowed: allowedDays,
       });
     }
 
-    // Step 4: Convert scan time into minutes
-    const scanHour = scanTime.getHours();
-    const scanMin = scanTime.getMinutes();
-    const scanTotalMinutes = scanHour * 60 + scanMin;
+    // ✅ STEP 7: Convert Scan Time into Minutes
+    const scanTotal = scanTime.getHours() * 60 + scanTime.getMinutes();
 
-    // Step 5: Convert SQL TIME to minutes
-    const [startH, startM] = classInfo.start.split(":").map(Number);
-    const [endH, endM] = classInfo.end.split(":").map(Number);
+    // ✅ STEP 8: Convert SQL TIME → Minutes
+    const [startH, startM] = classInfo.class_start_time.split(":").map(Number);
+    const [endH, endM] = classInfo.class_end_time.split(":").map(Number);
 
-    const classStartMinutes = startH * 60 + startM;
-    const classEndMinutes = endH * 60 + endM;
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
 
-    // Step 6: Validate class time window
-    if (
-      scanTotalMinutes < classStartMinutes ||
-      scanTotalMinutes > classEndMinutes
-    ) {
+    // ✅ STEP 9: Validate time window
+    if (scanTotal < startMinutes || scanTotal > endMinutes) {
       return res.status(400).json({
-        message: "No class in session at this time",
-        details: {
-          classStart: classInfo.start,
-          classEnd: classInfo.end,
-          scanTime: `${scanHour}:${scanMin}`,
-        },
+        message: "No class running at this time",
+        allowed_time: `${classInfo.class_start_time} - ${classInfo.class_end_time}`,
+        scan_time: scanTime.toLocaleTimeString(),
       });
     }
 
-    // Step 7: Calculate delay (for Late)
-    const delay = scanTotalMinutes - classStartMinutes;
+    // ✅ STEP 10: Attendance logic
     let status = "present";
     let remarks = "On time";
 
+    const delay = scanTotal - startMinutes;
     if (delay > 15) {
       status = "late";
       remarks = `Late by ${delay} mins`;
     }
 
-    // Step 8: Save attendance
+    // ✅ STEP 11: Save Attendance
     await AttendanceModel.markAttendance(
       student_id,
       status,
@@ -155,12 +159,20 @@ export const markAttendance = async (req, res) => {
     );
 
     res.status(201).json({
+      success: true,
       message: `Attendance marked as ${status}`,
-      details: { student_id, status, remarks, time_in },
+      details: {
+        student_id,
+        status,
+        remarks,
+        date: dateStr,
+        scan_time: scanTime.toLocaleTimeString(),
+      },
     });
   } catch (error) {
+    console.error("Attendance Error:", error);
     res.status(500).json({
-      message: "Error marking attendance",
+      message: "Internal server error",
       error: error.message,
     });
   }
