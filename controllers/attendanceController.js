@@ -61,9 +61,11 @@ export const markAttendance = async (req, res) => {
     }
 
     // ✅ STEP 1: Always use server current time (UTC → PKT)
-    const scanTime = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" })
-    );
+    const scanTime = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Karachi",
+    });
+    console.log(scanTime);
+    // Example output: "11/28/2025, 10:29:00 PM"
 
     const isoString = scanTime.toISOString();
     const dateStr = scanTime.toISOString().split("T")[0];
@@ -90,7 +92,7 @@ export const markAttendance = async (req, res) => {
 
     // ✅ STEP 4: Fetch class schedule
     const classInfo = await ClassModel.getClassSchedule(student.class_id);
-    
+
     if (
       !classInfo ||
       !classInfo.class_start_time ||
