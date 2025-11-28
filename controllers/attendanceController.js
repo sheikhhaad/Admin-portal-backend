@@ -4,9 +4,6 @@ import { ClassModel } from "../models/classModel.js";
 import { CourseModel } from "../models/courseModel.js";
 import { StudentModel } from "../models/studentModel.js";
 
-// ✅ Auto absent Attendance (QR Scan or Manual)
-// npm install node-cron
-
 // ✅ Mark Attendance (QR Scan or Manual)
 // export const markAttendance = async (req, res) => {
 //   try {
@@ -56,21 +53,22 @@ export const markAttendance = async (req, res) => {
   try {
     console.log("Incoming payload:", req.body);
 
-    const { student_id, time_in } = req.body;
+    const { student_id } = req.body;
 
-    if (!student_id || !time_in) {
-      return res.status(400).json({
-        message: "student_id and time_in are required",
-      });
+    // Validate student_id
+    if (!student_id || typeof student_id !== "string") {
+      return res.status(400).json({ error: "Invalid student_id" });
     }
 
-    // ✅ STEP 1: Convert frontend time to PK Time
-    const scanTime = new Date(time_in + "+05:00"); // PK Fix
+    // ✅ STEP 1: Always use server current time (UTC → PKT)
+    const scanTime = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" })
+    );
 
-    // ✅ STEP 2: Extract Date only (YYYY-MM-DD)
+    const isoString = scanTime.toISOString();
     const dateStr = scanTime.toISOString().split("T")[0];
 
-    // ✅ STEP 3: Prevent duplicate attendance
+    // ✅ STEP 2: Prevent duplicate attendance
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
       student_id,
       dateStr
@@ -82,7 +80,7 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 4: Get student record
+    // ✅ STEP 3: Get student record
     const student = await StudentModel.getByStudentId(student_id);
     if (!student || !student.class_id) {
       return res.status(404).json({
@@ -90,9 +88,9 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 5: Fetch class schedule
+    // ✅ STEP 4: Fetch class schedule
     const classInfo = await ClassModel.getClassSchedule(student.class_id);
-
+    
     if (
       !classInfo ||
       !classInfo.class_start_time ||
@@ -104,10 +102,12 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 6: Normalize Day check (Mon Tue Wed)
+    // ✅ STEP 5: Normalize Day check
     const dayOfWeek = scanTime.toLocaleDateString("en-US", {
       weekday: "short",
+      timeZone: "Asia/Karachi",
     });
+
     const allowedDays = classInfo.days
       .split(",")
       .map((d) => d.trim().slice(0, 3));
@@ -120,17 +120,17 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 7: Convert Scan Time into Minutes
+    // ✅ STEP 6: Convert Scan Time into Minutes
     const scanTotal = scanTime.getHours() * 60 + scanTime.getMinutes();
 
-    // ✅ STEP 8: Convert SQL TIME → Minutes
+    // ✅ STEP 7: Convert SQL TIME → Minutes
     const [startH, startM] = classInfo.class_start_time.split(":").map(Number);
     const [endH, endM] = classInfo.class_end_time.split(":").map(Number);
 
     const startMinutes = startH * 60 + startM;
     const endMinutes = endH * 60 + endM;
 
-    // ✅ STEP 9: Validate time window
+    // ✅ STEP 8: Validate time window
     if (scanTotal < startMinutes || scanTotal > endMinutes) {
       return res.status(400).json({
         message: "No class running at this time",
@@ -139,23 +139,25 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 10: Attendance logic
+    // ✅ STEP 9: Attendance logic with grace period
     let status = "present";
     let remarks = "On time";
 
     const delay = scanTotal - startMinutes;
-    if (delay > 15) {
+    const gracePeriod = 15; // minutes
+
+    if (delay > gracePeriod) {
       status = "late";
       remarks = `Late by ${delay} mins`;
     }
 
-    // ✅ STEP 11: Save Attendance
+    // ✅ STEP 10: Save Attendance
     await AttendanceModel.markAttendance(
       student_id,
       status,
       remarks,
       dateStr,
-      time_in
+      isoString // store UTC time in DB
     );
 
     res.status(201).json({
@@ -178,6 +180,8 @@ export const markAttendance = async (req, res) => {
   }
 };
 
+// ✅ Auto absent Attendance (QR Scan or Manual)
+// npm install node-cron
 export const autoMarkAbsentees = async (req, res) => {
   try {
     const today = new Date();
