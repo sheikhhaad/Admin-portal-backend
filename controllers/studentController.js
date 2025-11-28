@@ -195,3 +195,17 @@ export const approveStudents = async (req, res) => {
       .json({ message: "Error approving students", error: err.message });
   }
 };
+
+// 🗑️ Move student to trash by student_id
+export const deleteStudentToTrash = async (req, res) => {
+  try {
+    const { student_id } = req.params;
+    const { deleted_by = null, reason = null } = req.body;
+
+    const result = await StudentModel.deleteToTrashByStudentId(student_id, deleted_by, reason);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting student", error: error.message });
+  }
+};

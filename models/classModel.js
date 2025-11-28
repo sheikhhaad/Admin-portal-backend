@@ -36,12 +36,12 @@ export const ClassModel = {
   getClassSchedule: async (class_id) => {
     const query = `
    SELECT 
-    class_start_time AS start, 
-    class_end_time AS end, 
+    class_start_time, 
+    class_end_time, 
     days 
   FROM campus_classes 
   WHERE class_id = ?
-
+  LIMIT 1
   `;
     const result = await executeQuery(query, [class_id]);
     return result[0];
