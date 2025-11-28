@@ -60,15 +60,35 @@ export const markAttendance = async (req, res) => {
       return res.status(400).json({ error: "Invalid student_id" });
     }
 
-    // ✅ STEP 1: Always use server current time (UTC → PKT)
-    const scanTime = new Date().toLocaleString("en-US", {
-      timeZone: "Asia/Karachi",
-    });
-    console.log(scanTime);
-    // Example output: "11/28/2025, 10:29:00 PM"
+    // ✅ FIX 1: Get current time in PKT correctly
+    const now = new Date();
+    const scanTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Karachi" })
+    );
+
+    // ✅ FIX 2: Debug logging to see what's happening
+    console.log("UTC time:", now.toString());
+    console.log("PKT time:", scanTime.toString());
+    console.log(
+      "PKT day full:",
+      scanTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "Asia/Karachi",
+      })
+    );
 
     const isoString = scanTime.toISOString();
     const dateStr = scanTime.toISOString().split("T")[0];
+
+    // ✅ FIX 3: More reliable day detection
+    const dayOfWeek = scanTime
+      .toLocaleDateString("en-US", {
+        weekday: "short",
+        timeZone: "Asia/Karachi",
+      })
+      .toLowerCase();
+
+    console.log("Detected day:", dayOfWeek);
 
     // ✅ STEP 2: Prevent duplicate attendance
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
@@ -104,15 +124,13 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 5: Normalize Day check
-    const dayOfWeek = scanTime.toLocaleDateString("en-US", {
-      weekday: "short",
-      timeZone: "Asia/Karachi",
-    });
-
+    // ✅ FIX 4: Normalize allowed days properly
     const allowedDays = classInfo.days
       .split(",")
-      .map((d) => d.trim().slice(0, 3));
+      .map((d) => d.trim().toLowerCase().slice(0, 3));
+
+    console.log("Allowed days:", allowedDays);
+    console.log("Today is:", dayOfWeek);
 
     if (!allowedDays.includes(dayOfWeek)) {
       return res.status(400).json({
@@ -171,6 +189,7 @@ export const markAttendance = async (req, res) => {
         remarks,
         date: dateStr,
         scan_time: scanTime.toLocaleTimeString(),
+        detected_day: dayOfWeek, // Add this for debugging
       },
     });
   } catch (error) {
