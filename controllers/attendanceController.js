@@ -49,48 +49,27 @@ import { StudentModel } from "../models/studentModel.js";
 //   }
 // };
 
+const moment = require("moment-timezone");
+
 export const markAttendance = async (req, res) => {
   try {
     console.log("Incoming payload:", req.body);
-
     const { student_id } = req.body;
 
-    // Validate student_id
     if (!student_id || typeof student_id !== "string") {
       return res.status(400).json({ error: "Invalid student_id" });
     }
 
-    // ✅ FIX 1: Get current time in PKT correctly
-    const now = new Date();
-    const scanTime = new Date(
-      now.toLocaleString("en-US", { timeZone: "Asia/Karachi" })
-    );
-
-    // ✅ FIX 2: Debug logging to see what's happening
-    console.log("UTC time:", now.toString());
-    console.log("PKT time:", scanTime.toString());
-    console.log(
-      "PKT day full:",
-      scanTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "Asia/Karachi",
-      })
-    );
-
+    // ✅ FIX: Use moment-timezone for reliable timezone handling
+    const scanTime = moment().tz("Asia/Karachi");
+    const dayOfWeek = scanTime.format("ddd").toLowerCase();
+    const dateStr = scanTime.format("YYYY-MM-DD");
     const isoString = scanTime.toISOString();
-    const dateStr = scanTime.toISOString().split("T")[0];
 
-    // ✅ FIX 3: More reliable day detection
-    const dayOfWeek = scanTime
-      .toLocaleDateString("en-US", {
-        weekday: "short",
-        timeZone: "Asia/Karachi",
-      })
-      .toLowerCase();
-
+    console.log("PKT time:", scanTime.toString());
     console.log("Detected day:", dayOfWeek);
 
-    // ✅ STEP 2: Prevent duplicate attendance
+    // Rest of your code remains the same...
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
       student_id,
       dateStr
@@ -102,7 +81,6 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 3: Get student record
     const student = await StudentModel.getByStudentId(student_id);
     if (!student || !student.class_id) {
       return res.status(404).json({
@@ -110,7 +88,6 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 4: Fetch class schedule
     const classInfo = await ClassModel.getClassSchedule(student.class_id);
 
     if (
@@ -124,7 +101,6 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ FIX 4: Normalize allowed days properly
     const allowedDays = classInfo.days
       .split(",")
       .map((d) => d.trim().toLowerCase().slice(0, 3));
@@ -140,44 +116,40 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    // ✅ STEP 6: Convert Scan Time into Minutes
-    const scanTotal = scanTime.getHours() * 60 + scanTime.getMinutes();
+    // ✅ Convert moment time to minutes for comparison
+    const scanTotal = scanTime.hours() * 60 + scanTime.minutes();
 
-    // ✅ STEP 7: Convert SQL TIME → Minutes
     const [startH, startM] = classInfo.class_start_time.split(":").map(Number);
     const [endH, endM] = classInfo.class_end_time.split(":").map(Number);
 
     const startMinutes = startH * 60 + startM;
     const endMinutes = endH * 60 + endM;
 
-    // ✅ STEP 8: Validate time window
     if (scanTotal < startMinutes || scanTotal > endMinutes) {
       return res.status(400).json({
         message: "No class running at this time",
         allowed_time: `${classInfo.class_start_time} - ${classInfo.class_end_time}`,
-        scan_time: scanTime.toLocaleTimeString(),
+        scan_time: scanTime.format("HH:mm:ss"),
       });
     }
 
-    // ✅ STEP 9: Attendance logic with grace period
     let status = "present";
     let remarks = "On time";
 
     const delay = scanTotal - startMinutes;
-    const gracePeriod = 15; // minutes
+    const gracePeriod = 15;
 
     if (delay > gracePeriod) {
       status = "late";
       remarks = `Late by ${delay} mins`;
     }
 
-    // ✅ STEP 10: Save Attendance
     await AttendanceModel.markAttendance(
       student_id,
       status,
       remarks,
       dateStr,
-      isoString // store UTC time in DB
+      isoString
     );
 
     res.status(201).json({
@@ -188,8 +160,8 @@ export const markAttendance = async (req, res) => {
         status,
         remarks,
         date: dateStr,
-        scan_time: scanTime.toLocaleTimeString(),
-        detected_day: dayOfWeek, // Add this for debugging
+        scan_time: scanTime.format("HH:mm:ss"),
+        detected_day: dayOfWeek,
       },
     });
   } catch (error) {
