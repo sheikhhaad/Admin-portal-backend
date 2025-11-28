@@ -49,7 +49,7 @@ import { StudentModel } from "../models/studentModel.js";
 //   }
 // };
 
-const moment = require("moment-timezone");
+import moment from 'moment-timezone';
 
 export const markAttendance = async (req, res) => {
   try {
