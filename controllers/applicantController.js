@@ -1,6 +1,7 @@
 // controllers/applicantController.js
 import { ApplicantModel } from "../models/applicantModel.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
+import QRCode from "qrcode";
 
 // Utility to clean file names
 const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
@@ -86,10 +87,36 @@ export const createApplicant = async (req, res) => {
       register_fee: registerFeeUrl || null,
     });
 
+    // Generate Registration Number (YYMM + applicant_id)
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const registration_no = `${year}${month}${applicantId}`;
+
+    // Generate QR BUFFER
+    const qrBuffer = await QRCode.toBuffer(registration_no);
+
+    // Upload QR to Cloudinary
+    const qrUpload = await uploadBufferToCloudinary(
+      qrBuffer,
+      "applicants/qr_codes",
+      `QR_${registration_no}`
+    );
+
+    const qr_code_url = qrUpload.secure_url;
+
+    await ApplicantModel.updateRegistrationAndQR(
+      applicantId,
+      registration_no,
+      qr_code_url
+    );
+
     res.status(201).json({
       success: true,
       message: "Applicant registered successfully",
       applicant_id: applicantId,
+      registration_no,
+      qr_code_url,
       applicant_img: applicantImgUrl,
       register_fee: registerFeeUrl,
     });
