@@ -8,11 +8,11 @@ import QRCode from "qrcode";
 const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
 const getTestSlot = async (gender) => {
   const slots = [
-    "11:00-12:00",
-    "12:30-01:30",
-    "02:00-03:00",
-    "04:00-05:00",
-    "06:00-07:00",
+    "11:00-12:00 AM",
+    "12:30-01:30 PM",
+    "02:00-03:00 PM",
+    "04:00-05:00 PM",
+    "06:00-07:00 PM",
   ];
 
   let allowedSlots;
