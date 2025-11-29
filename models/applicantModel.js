@@ -19,11 +19,6 @@ export const ApplicantModel = {
     ]);
   },
 
-  saveQrUrl: async (applicant_id, qr_url) => {
-    const query = "UPDATE applicants SET qr_url = ? WHERE applicant_id = ?";
-    return await executeQuery(query, [qr_url, applicant_id]);
-  },
-
   // ➕ Create new applicant
   create: async (data) => {
     const query = `
