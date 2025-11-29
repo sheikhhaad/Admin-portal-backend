@@ -51,9 +51,9 @@ export const AttendanceModel = {
     const query = `
       SELECT a.id, s.name, a.status, a.time_in, a.remarks
       FROM attendance a
-      JOIN students s ON a.student_id = s.id
-      WHERE a.date = CURDATE()
-      ORDER BY a.time_in ASC
+      JOIN students s ON a.student_id = s.student_id
+      WHERE DATE(a.date) = CURDATE()
+      ORDER BY a.time_in ASC;
     `;
     return await executeQuery(query);
   },
