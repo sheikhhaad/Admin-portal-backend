@@ -9,7 +9,7 @@ export const ApplicantModel = {
   ) => {
     const query = `
     UPDATE applicants 
-    SET registration_no = ?, qr_code_url = ? 
+    SET registration_no = ?, req_qr_url = ? 
     WHERE applicant_id = ?
   `;
     return await executeQuery(query, [
