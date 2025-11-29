@@ -3,6 +3,7 @@ import { AttendanceModel } from "../models/attendanceModel.js";
 import { ClassModel } from "../models/classModel.js";
 import { CourseModel } from "../models/courseModel.js";
 import { StudentModel } from "../models/studentModel.js";
+import moment from "moment-timezone";
 
 // ✅ Mark Attendance (QR Scan or Manual)
 // export const markAttendance = async (req, res) => {
@@ -49,8 +50,6 @@ import { StudentModel } from "../models/studentModel.js";
 //   }
 // };
 
-import moment from 'moment-timezone';
-
 export const markAttendance = async (req, res) => {
   try {
     console.log("Incoming payload:", req.body);
@@ -68,8 +67,9 @@ export const markAttendance = async (req, res) => {
 
     console.log("PKT time:", scanTime.toString());
     console.log("Detected day:", dayOfWeek);
+    console.log("Date string:", dateStr);
 
-    // Rest of your code remains the same...
+    // Prevent duplicate attendance
     const alreadyMarked = await AttendanceModel.checkAlreadyMarked(
       student_id,
       dateStr
@@ -119,24 +119,55 @@ export const markAttendance = async (req, res) => {
     // ✅ Convert moment time to minutes for comparison
     const scanTotal = scanTime.hours() * 60 + scanTime.minutes();
 
-    const [startH, startM] = classInfo.class_start_time.split(":").map(Number);
-    const [endH, endM] = classInfo.class_end_time.split(":").map(Number);
+    const [startH, startM, startS] = classInfo.class_start_time
+      .split(":")
+      .map(Number);
+    const [endH, endM, endS] = classInfo.class_end_time.split(":").map(Number);
 
     const startMinutes = startH * 60 + startM;
     const endMinutes = endH * 60 + endM;
 
+    // ✅ If end time is less than start time, it crosses midnight
+    if (endMinutes < startMinutes) {
+      endMinutes += 24 * 60; // Add 24 hours to end time
+    }
+
+    console.log("Scan time (minutes):", scanTotal);
+    console.log("Class time (adjusted):", startMinutes, "-", endMinutes);
+    console.log(
+      "Raw times - Start:",
+      classInfo.class_start_time,
+      "End:",
+      classInfo.class_end_time
+    );
+
+    // ✅ Adjust scan time for comparison if needed
+    let scanTotalAdjusted = scanTotal;
+    if (endMinutes > 24 * 60 && scanTotal < startMinutes) {
+      // If class crosses midnight and current time is before midnight
+      scanTotalAdjusted += 24 * 60;
+    }
+    console.log("Adjusted scan time:", scanTotalAdjusted);
+
+    // ✅ Check if scan time is within class hours
     if (scanTotal < startMinutes || scanTotal > endMinutes) {
       return res.status(400).json({
         message: "No class running at this time",
         allowed_time: `${classInfo.class_start_time} - ${classInfo.class_end_time}`,
         scan_time: scanTime.format("HH:mm:ss"),
+        debug: {
+          scan_minutes: scanTotal,
+          adjusted_scan_minutes: scanTotalAdjusted,
+          start_minutes: startMinutes,
+          end_minutes: endMinutes,
+        },
       });
     }
 
     let status = "present";
     let remarks = "On time";
 
-    const delay = scanTotal - startMinutes;
+    const delay = scanTotalAdjusted - startMinutes;
     const gracePeriod = 15;
 
     if (delay > gracePeriod) {
@@ -162,6 +193,7 @@ export const markAttendance = async (req, res) => {
         date: dateStr,
         scan_time: scanTime.format("HH:mm:ss"),
         detected_day: dayOfWeek,
+        class_timing: `${classInfo.class_start_time} - ${classInfo.class_end_time}`,
       },
     });
   } catch (error) {
