@@ -1,10 +1,44 @@
 // controllers/applicantController.js
+import { executeQuery } from "../config/queryHelper.js";
 import { ApplicantModel } from "../models/applicantModel.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 import QRCode from "qrcode";
 
 // Utility to clean file names
 const sanitizeId = (str) => str.replace(/[^a-zA-Z0-9]/g, "_");
+const getTestSlot = async (gender) => {
+  const slots = [
+    "11:00-12:00",
+    "12:00-01:00",
+    "01:00-02:00",
+    "02:00-03:00",
+    "03:00-04:00",
+    "04:00-05:00",
+    "05:00-06:00",
+  ];
+
+  let allowedSlots;
+
+  // First 3 slots for females
+  if (gender.toLowerCase() === "female") {
+    allowedSlots = slots.slice(0, 3);
+  } else {
+    allowedSlots = slots.slice(3);
+  }
+
+  for (let slot of allowedSlots) {
+    const result = await executeQuery(
+      "SELECT COUNT(*) AS total FROM applicants WHERE test_slot = ?",
+      [slot]
+    );
+
+    if (result[0].total < 300) {
+      return slot;
+    }
+  }
+
+  return null; // No space
+};
 
 // ➕ Register new applicant
 export const createApplicant = async (req, res) => {
@@ -70,6 +104,18 @@ export const createApplicant = async (req, res) => {
       ).secure_url;
     }
 
+    // Auto test slot assignment
+    const testSlot = await getTestSlot(gender);
+
+    if (!testSlot) {
+      return res.status(400).json({
+        message: "All test slots are full. Please contact admin.",
+      });
+    }
+
+    // Extract slot start time (e.g. "11:00" from "11:00-12:00")
+    const test_time = testSlot.split("-")[0];
+
     // Create record
     const applicantId = await ApplicantModel.create({
       name,
@@ -85,6 +131,8 @@ export const createApplicant = async (req, res) => {
       class_id,
       applicant_img: applicantImgUrl || null,
       register_fee: registerFeeUrl || null,
+      test_slot: testSlot,
+      test_time: test_time,
     });
 
     // Generate Registration Number (YYMM + applicant_id)
@@ -119,6 +167,8 @@ export const createApplicant = async (req, res) => {
       qr_code_url,
       applicant_img: applicantImgUrl,
       register_fee: registerFeeUrl,
+      test_slot: testSlot,
+      test_time,
     });
   } catch (error) {
     console.error("APPLICANT CREATE ERROR:", error);

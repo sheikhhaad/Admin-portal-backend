@@ -29,8 +29,8 @@ export const ApplicantModel = {
     const query = `
       INSERT INTO applicants 
         (name, father_name, contact, cnic, email, address, city, gender, qualification,
-         course_id, class_id, applicant_img, register_fee, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+         course_id, class_id, applicant_img, register_fee, test_slot, test_time, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
     `;
 
     const params = [
@@ -47,6 +47,8 @@ export const ApplicantModel = {
       data.class_id,
       data.applicant_img,
       data.register_fee,
+      data.test_slot,
+      data.test_time,
     ];
 
     const result = await executeQuery(query, params);
