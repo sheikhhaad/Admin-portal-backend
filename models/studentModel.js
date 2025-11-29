@@ -56,57 +56,79 @@ export const StudentModel = {
     ]);
   },
 
-  // ✅ Create new student (atomic student_id)
-  create: async (data) => {
-    const {
-      student_img = null,
-      name,
-      cnic = null,
-      contact = null,
-      address = null,
-      fee_amount = 0,
-      qr_url = null,
-      course_id,
-      class_id = null,
-      voucher_url = null,
-      email = null,
-    } = data;
-
-    if (!name || !course_id) {
-      throw new Error("Name and course_id are required!");
-    }
-
-    // 🔢 Step 1: Generate course-wise unique student_id
-    const student_id = await generateStudentId(course_id);
-
-    // 🧾 Step 2: Insert into students table
-    const query = `
-      INSERT INTO students
-        (student_id, student_img, name, cnic, contact, address,
-         fee_amount, qr_url, course_id, class_id, voucher_url, email, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `;
-
-    const values = [
-      student_id,
-      student_img,
-      name,
-      cnic,
-      contact,
-      address,
-      fee_amount,
-      qr_url,
-      course_id,
-      class_id,
-      voucher_url,
-      email,
-    ];
-
-    await executeQuery(query, values);
-
-    // ✅ Return generated student_id
-    return { message: "Student created successfully", student_id };
+  insertStudent: async (data) => {
+    return await executeQuery(
+      `INSERT INTO students 
+        (student_id, student_img, name, cnic, contact, address, email, qr_url, 
+         course_id, class_id, voucher_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        data.student_id,
+        data.student_img,
+        data.name,
+        data.cnic,
+        data.contact,
+        data.address,
+        data.email,
+        data.qr_url,
+        data.course_id,
+        data.class_id,
+        data.voucher_url,
+      ]
+    );
   },
+
+  // ✅ Create new student (atomic student_id)
+  // create: async (data) => {
+  //   const {
+  //     student_img = null,
+  //     name,
+  //     cnic = null,
+  //     contact = null,
+  //     address = null,
+  //     fee_amount = 0,
+  //     qr_url = null,
+  //     course_id,
+  //     class_id = null,
+  //     voucher_url = null,
+  //     email = null,
+  //   } = data;
+
+  //   if (!name || !course_id) {
+  //     throw new Error("Name and course_id are required!");
+  //   }
+
+  //   // 🔢 Step 1: Generate course-wise unique student_id
+  //   const student_id = await generateStudentId(course_id);
+
+  //   // 🧾 Step 2: Insert into students table
+  //   const query = `
+  //     INSERT INTO students
+  //       (student_id, student_img, name, cnic, contact, address,
+  //        fee_amount, qr_url, course_id, class_id, voucher_url, email, created_at)
+  //     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+  //   `;
+
+  //   const values = [
+  //     student_id,
+  //     student_img,
+  //     name,
+  //     cnic,
+  //     contact,
+  //     address,
+  //     fee_amount,
+  //     qr_url,
+  //     course_id,
+  //     class_id,
+  //     voucher_url,
+  //     email,
+  //   ];
+
+  //   await executeQuery(query, values);
+
+  //   // ✅ Return generated student_id
+  //   return { message: "Student created successfully", student_id };
+  // },
 
   // 🗑️ Move student to trash by student_id
   deleteToTrashByStudentId: async (

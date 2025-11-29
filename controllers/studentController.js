@@ -89,42 +89,35 @@ export const addStudent = async (req, res) => {
 
     const qrUrl = qrUpload.secure_url;
 
-    // 5️⃣ Insert into DB
-    await executeQuery(
-      `INSERT INTO students 
-        (student_id, student_img, name, cnic, contact, address, email, qr_url, course_id, class_id, voucher_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        student_id,
-        studentImgUrl,
-        name,
-        cnic,
-        contact,
-        address,
-        email,
-        qrUrl,
-        course_id,
-        class_id,
-        voucherUrl,
-      ]
-    );
-
-   const row = [
-  student_id || "",
-  name || "",
-  contact || "",
-  course_id || "",
-  voucherUrl || "",
-  new Date().toISOString()
-]
-
-await appendToSheet(row)
-
-
-    return res.status(201).json({
-      success: true,
+    // Insert Student
+    await StudentModel.insertStudent({
       student_id,
-      message: "Student registered successfully!",
+      student_img: studentImgUrl,
+      name,
+      cnic,
+      contact,
+      address,
+      email,
+      qr_url: qrUrl,
+      course_id,
+      class_id,
+      voucher_url: voucherUrl,
+    });
+
+    // Insert into Google Sheet
+    await appendToSheet([
+      student_id,
+      name,
+      contact,
+      course_id,
+      voucherUrl,
+      new Date().toISOString(),
+    ]);
+
+    res.status(201).json({
+      success: true,
+      message: "Student registered successfully",
+      student_id,
       student_img: studentImgUrl,
       voucher_url: voucherUrl,
       qr_url: qrUrl,
@@ -134,6 +127,129 @@ await appendToSheet(row)
     return res.status(500).json({ error: err.message });
   }
 };
+
+// export const addStudent = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       cnic = null,
+//       contact = null,
+//       address = null,
+//       email = null,
+//       course_id,
+//       class_id = null,
+//     } = req.body;
+
+//     if (!name || !course_id) {
+//       return res
+//         .status(400)
+//         .json({ error: "Name and Course ID are required fields!" });
+//     }
+
+//     // 🚧 REQUIRE contact to check duplicates
+//     if (!contact) {
+//       return res.status(400).json({ error: "Contact number is required" });
+//     }
+
+//     // 0️⃣ DUPLICATE CHECK — IMPORTANT
+//     const exists = await executeQuery(
+//       "SELECT student_id FROM students WHERE contact = ? LIMIT 1",
+//       [contact]
+//     );
+
+//     if (exists.length > 0) {
+//       return res.status(409).json({
+//         success: false,
+//         message: "Student already registered with this contact number!",
+//         student_id: exists[0].student_id,
+//       });
+//     }
+
+//     // 1️⃣ Generate Student ID
+//     const student_id = await generateStudentId(course_id);
+//     const safeStudentId = sanitizeId(student_id);
+
+//     let studentImgUrl = null;
+//     let voucherUrl = null;
+
+//     // 2️⃣ Upload Student Photo (Buffer method)
+//     if (req.files?.student_img?.[0]) {
+//       const imgBuffer = req.files.student_img[0].buffer;
+//       const upload = await uploadBufferToCloudinary(
+//         imgBuffer,
+//         "students_images",
+//         `${safeStudentId}_photo`
+//       );
+//       studentImgUrl = upload.secure_url;
+//     }
+
+//     // 3️⃣ Upload Fee Voucher (Buffer method)
+//     if (req.files?.fee_voucher?.[0]) {
+//       const voucherBuffer = req.files.fee_voucher[0].buffer;
+//       const upload = await uploadBufferToCloudinary(
+//         voucherBuffer,
+//         "students_vouchers",
+//         `${safeStudentId}_voucher`
+//       );
+//       voucherUrl = upload.secure_url;
+//     }
+
+//     // 4️⃣ Generate QR → Convert Base64 PNG to Buffer → Upload
+//     const qrBase64 = await QRCode.toDataURL(student_id);
+//     const qrBuffer = Buffer.from(qrBase64.split(",")[1], "base64");
+
+//     const qrUpload = await uploadBufferToCloudinary(
+//       qrBuffer,
+//       "student_qr",
+//       `${safeStudentId}_qr`
+//     );
+
+//     const qrUrl = qrUpload.secure_url;
+
+//     // 5️⃣ Insert into DB
+//     await executeQuery(
+//       `INSERT INTO students
+//         (student_id, student_img, name, cnic, contact, address, email, qr_url, course_id, class_id, voucher_url)
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         student_id,
+//         studentImgUrl,
+//         name,
+//         cnic,
+//         contact,
+//         address,
+//         email,
+//         qrUrl,
+//         course_id,
+//         class_id,
+//         voucherUrl,
+//       ]
+//     );
+
+//    const row = [
+//   student_id || "",
+//   name || "",
+//   contact || "",
+//   course_id || "",
+//   voucherUrl || "",
+//   new Date().toISOString()
+// ]
+
+// await appendToSheet(row)
+
+//     return res.status(201).json({
+//       success: true,
+//       student_id,
+//       message: "Student registered successfully!",
+//       student_img: studentImgUrl,
+//       voucher_url: voucherUrl,
+//       qr_url: qrUrl,
+//     });
+//   } catch (err) {
+//     console.error("Error in addStudent:", err);
+//     return res.status(500).json({ error: err.message });
+//   }
+// };
 
 export const getByStudentId = async (req, res) => {
   try {
@@ -202,10 +318,16 @@ export const deleteStudentToTrash = async (req, res) => {
     const { student_id } = req.params;
     const { deleted_by = null, reason = null } = req.body;
 
-    const result = await StudentModel.deleteToTrashByStudentId(student_id, deleted_by, reason);
+    const result = await StudentModel.deleteToTrashByStudentId(
+      student_id,
+      deleted_by,
+      reason
+    );
 
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Error deleting student", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting student", error: error.message });
   }
 };
