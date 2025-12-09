@@ -16,7 +16,7 @@ export const addStudent = async (req, res) => {
     const {
       name,
       cnic = null,
-      contact = null,
+      contact,
       address = null,
       email = null,
       course_id,
@@ -26,15 +26,13 @@ export const addStudent = async (req, res) => {
     if (!name || !course_id) {
       return res
         .status(400)
-        .json({ error: "Name and Course ID are required fields!" });
+        .json({ error: "Name and Course ID are required!" });
     }
 
-    // 🚧 REQUIRE contact to check duplicates
     if (!contact) {
       return res.status(400).json({ error: "Contact number is required" });
     }
 
-    // 0️⃣ DUPLICATE CHECK — IMPORTANT
     const exists = await executeQuery(
       "SELECT student_id FROM students WHERE contact = ? LIMIT 1",
       [contact]
@@ -43,78 +41,79 @@ export const addStudent = async (req, res) => {
     if (exists.length > 0) {
       return res.status(409).json({
         success: false,
-        message: "Student already registered with this contact number!",
+        message: "Student already registered!",
         student_id: exists[0].student_id,
       });
     }
 
-    // 1️⃣ Generate Student ID
+    // 🔥 Step 1 — Create DB row FIRST
+    const insertResult = await executeQuery(
+      `
+      INSERT INTO students
+        (name, cnic, contact, address, email, course_id, class_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+      `,
+      [name, cnic, contact, address, email, course_id, class_id]
+    );
+
+    const internalId = insertResult.insertId; // ALWAYS UNIQUE
+
+    // 🔢 Step 2 — Generate student_id
     const student_id = await generateStudentId(course_id);
-    const safeStudentId = sanitizeId(student_id);
 
     let studentImgUrl = null;
     let voucherUrl = null;
 
-    // 2️⃣ Upload Student Photo (Buffer method)
+    // 📸 Upload Student Image
     if (req.files?.student_img?.[0]) {
-      const imgBuffer = req.files.student_img[0].buffer;
-      const upload = await uploadBufferToCloudinary(
-        imgBuffer,
-        "students_images",
-        `${safeStudentId}_photo`
-      );
-      studentImgUrl = upload.secure_url;
+      const buffer = req.files.student_img[0].buffer;
+      studentImgUrl = (
+        await uploadBufferToCloudinary(
+          buffer,
+          "students_images",
+          `STU_${internalId}_photo`
+        )
+      ).secure_url;
     }
 
-    // 3️⃣ Upload Fee Voucher (Buffer method)
+    // 🧾 Upload Voucher
     if (req.files?.fee_voucher?.[0]) {
-      const voucherBuffer = req.files.fee_voucher[0].buffer;
-      const upload = await uploadBufferToCloudinary(
-        voucherBuffer,
-        "students_vouchers",
-        `${safeStudentId}_voucher`
-      );
-      voucherUrl = upload.secure_url;
+      const buffer = req.files.fee_voucher[0].buffer;
+      voucherUrl = (
+        await uploadBufferToCloudinary(
+          buffer,
+          "students_vouchers",
+          `STU_${internalId}_voucher`
+        )
+      ).secure_url;
     }
 
-    // 4️⃣ Generate QR → Convert Base64 PNG to Buffer → Upload
+    // 🔳 Generate QR
     const qrBase64 = await QRCode.toDataURL(student_id);
     const qrBuffer = Buffer.from(qrBase64.split(",")[1], "base64");
 
     const qrUpload = await uploadBufferToCloudinary(
       qrBuffer,
       "student_qr",
-      `${safeStudentId}_qr`
+      `STU_${internalId}_qr`
     );
 
     const qrUrl = qrUpload.secure_url;
 
-    // Insert Student
-    await StudentModel.insertStudent({
-      student_id,
-      student_img: studentImgUrl,
-      name,
-      cnic,
-      contact,
-      address,
-      email,
-      qr_url: qrUrl,
-      course_id,
-      class_id,
-      voucher_url: voucherUrl,
-    });
+    // 🔥 Step 3 — Update student row with final data
+    await executeQuery(
+      `
+      UPDATE students SET 
+        student_id = ?, 
+        student_img = ?, 
+        voucher_url = ?, 
+        qr_url = ?
+      WHERE id = ?
+      `,
+      [student_id, studentImgUrl, voucherUrl, qrUrl, internalId]
+    );
 
-    // Insert into Google Sheet
-    await appendToSheet([
-      student_id,
-      name,
-      contact,
-      course_id,
-      voucherUrl,
-      new Date().toISOString(),
-    ]);
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Student registered successfully",
       student_id,
